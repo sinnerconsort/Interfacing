@@ -377,16 +377,22 @@
         fabElement.className = 'interfacing-fab';
         fabElement.innerHTML = '🔧';
         fabElement.title = 'Interfacing';
+        // Inline styles as fallback
+        fabElement.style.cssText = 'position:fixed;bottom:120px;left:60px;width:44px;height:44px;background:#252530;border:2px solid #bfa127;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,0.4);';
         fabElement.addEventListener('click', togglePanel);
         document.body.appendChild(fabElement);
+        console.log('[Interfacing] FAB created');
     }
     
     function createVitalsWidget() {
         vitalsWidgetElement = document.createElement('div');
         vitalsWidgetElement.id = 'interfacing-vitals-widget';
         vitalsWidgetElement.className = 'interfacing-vitals-widget';
+        // Inline styles as fallback
+        vitalsWidgetElement.style.cssText = 'position:fixed;bottom:170px;left:60px;width:140px;background:#1a1a1f;border:1px solid #3a3a4a;border-radius:6px;padding:8px;z-index:99998;font-family:Segoe UI,system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
         updateVitalsDisplay();
         document.body.appendChild(vitalsWidgetElement);
+        console.log('[Interfacing] Vitals widget created');
     }
     
     function updateVitalsDisplay() {
@@ -409,6 +415,8 @@
         panelElement = document.createElement('div');
         panelElement.id = 'interfacing-panel';
         panelElement.className = 'interfacing-panel hidden';
+        // Inline styles as fallback
+        panelElement.style.cssText = 'position:fixed;top:100px;left:60px;width:340px;max-height:70vh;background:#1a1a1f;border:1px solid #3a3a4a;border-radius:8px;z-index:100000;font-family:Segoe UI,system-ui,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.5);display:none;flex-direction:column;overflow:hidden;';
         
         panelElement.innerHTML = 
             '<div class="interfacing-panel-header">' +
@@ -570,6 +578,7 @@
     function showPresetsDialog() {
         var modal = document.createElement('div');
         modal.className = 'interfacing-modal';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:200000;';
         var itemsHtml = Object.values(PRESET_ITEMS).map(function(item) {
             var mods = Object.keys(item.modifiers || {}).map(function(k) {
                 return formatModifier(item.modifiers[k]) + ' ' + formatSkillName(k);
@@ -596,8 +605,21 @@
         document.body.appendChild(modal);
     }
     
-    function showPanel() { if (panelElement) { panelElement.classList.remove('hidden'); isPanelOpen = true; renderCurrentTab(); } }
-    function hidePanel() { if (panelElement) { panelElement.classList.add('hidden'); isPanelOpen = false; } }
+    function showPanel() { 
+        if (panelElement) { 
+            panelElement.classList.remove('hidden'); 
+            panelElement.style.display = 'flex';
+            isPanelOpen = true; 
+            renderCurrentTab(); 
+        } 
+    }
+    function hidePanel() { 
+        if (panelElement) { 
+            panelElement.classList.add('hidden'); 
+            panelElement.style.display = 'none';
+            isPanelOpen = false; 
+        } 
+    }
     function togglePanel() { isPanelOpen ? hidePanel() : showPanel(); }
     
     // ═══════════════════════════════════════════════════════════════
