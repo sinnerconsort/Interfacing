@@ -684,3 +684,30 @@
 .preset-equip:hover {
     opacity: 0.8;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   EXTENSION SETTINGS PANEL
+   ═══════════════════════════════════════════════════════════════ */
+
+.interfacing-settings-content {
+    padding: 10px;
+}
+
+.interfacing-settings-content p {
+    margin: 0 0 10px 0;
+    color: var(--if-text-secondary, #a0a0a0);
+}
+
+.interfacing-settings-content hr {
+    border: none;
+    border-top: 1px solid var(--if-border, #3a3a4a);
+    margin: 10px 0;
+}
+
+.interfacing-settings-content small {
+    color: var(--if-text-muted, #666);
+}
+
+#interfacing-open-panel {
+    width: 100%;
+}

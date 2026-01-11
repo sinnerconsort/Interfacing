@@ -3,8 +3,12 @@
  * Companion extension to Inland Empire
  */
 
+console.log('[Interfacing] Script file loaded');
+
 (function() {
     'use strict';
+    
+    console.log('[Interfacing] IIFE executing');
     
     const extensionName = 'Interfacing';
     
@@ -623,22 +627,130 @@
     function togglePanel() { isPanelOpen ? hidePanel() : showPanel(); }
     
     // ═══════════════════════════════════════════════════════════════
+    // ST EXTENSION PANEL
+    // ═══════════════════════════════════════════════════════════════
+    
+    function addExtensionPanel() {
+        const settingsHtml = `
+        <div id="interfacing-settings" class="extension_settings">
+            <div class="inline-drawer">
+                <div class="inline-drawer-toggle inline-drawer-header">
+                    <b>🔧 Interfacing</b>
+                    <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+                </div>
+                <div class="inline-drawer-content">
+                    <div class="interfacing-settings-content">
+                        <p>Disco Elysium gameplay systems - inventory, vitals, and more.</p>
+                        <div class="flex-container">
+                            <label for="interfacing-enabled">
+                                <input type="checkbox" id="interfacing-enabled" checked />
+                                Enable Interfacing
+                            </label>
+                        </div>
+                        <hr>
+                        <div class="flex-container">
+                            <button id="interfacing-open-panel" class="menu_button">Open Panel</button>
+                        </div>
+                        <hr>
+                        <small>FAB and vitals widget should appear at bottom-left of screen.</small>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+        
+        // Find the extensions container
+        const container = document.getElementById('extensions_settings');
+        if (container) {
+            container.insertAdjacentHTML('beforeend', settingsHtml);
+            
+            // Add click handler for open panel button
+            const openBtn = document.getElementById('interfacing-open-panel');
+            if (openBtn) {
+                openBtn.addEventListener('click', function() {
+                    showPanel();
+                });
+            }
+            
+            console.log('[Interfacing] Extension panel added to ST');
+        } else {
+            console.log('[Interfacing] Could not find extensions_settings container');
+        }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
     // INIT
     // ═══════════════════════════════════════════════════════════════
     
     function init() {
         console.log('[Interfacing] Initializing...');
-        createFAB();
-        createVitalsWidget();
-        createPanel();
-        connectToInlandEmpire();
-        console.log('[Interfacing] Ready');
+        try {
+            // Show a toast notification so we know it's running
+            if (typeof toastr !== 'undefined') {
+                toastr.info('Interfacing extension loaded!', 'Interfacing');
+            }
+            
+            // Debug: create a very visible test element
+            var testEl = document.createElement('div');
+            testEl.id = 'interfacing-debug-test';
+            testEl.innerHTML = '🔧 Interfacing Loaded!';
+            testEl.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:red;color:white;padding:20px;font-size:24px;z-index:999999;border-radius:10px;';
+            document.body.appendChild(testEl);
+            console.log('[Interfacing] Debug test element created');
+            
+            // Remove after 3 seconds
+            setTimeout(function() {
+                if (testEl.parentNode) testEl.parentNode.removeChild(testEl);
+            }, 3000);
+            
+            addExtensionPanel();
+            createFAB();
+            createVitalsWidget();
+            createPanel();
+            connectToInlandEmpire();
+            console.log('[Interfacing] Ready');
+            
+            if (typeof toastr !== 'undefined') {
+                toastr.success('UI created successfully', 'Interfacing');
+            }
+        } catch (e) {
+            console.error('[Interfacing] Init error:', e);
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Error: ' + e.message, 'Interfacing');
+            }
+        }
     }
     
-    if (typeof jQuery !== 'undefined') {
-        jQuery(init);
-    } else {
-        document.addEventListener('DOMContentLoaded', init);
+    // Try multiple initialization methods
+    function tryInit() {
+        console.log('[Interfacing] tryInit called');
+        if (document.body) {
+            init();
+        } else {
+            console.log('[Interfacing] Body not ready, waiting...');
+            setTimeout(tryInit, 100);
+        }
     }
+    
+    // Method 1: jQuery
+    if (typeof jQuery !== 'undefined') {
+        console.log('[Interfacing] Using jQuery init');
+        jQuery(function() {
+            setTimeout(tryInit, 1000);
+        });
+    } 
+    // Method 2: DOMContentLoaded
+    else if (document.readyState === 'loading') {
+        console.log('[Interfacing] Using DOMContentLoaded init');
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(tryInit, 1000);
+        });
+    } 
+    // Method 3: Already loaded
+    else {
+        console.log('[Interfacing] DOM already ready, direct init');
+        setTimeout(tryInit, 1000);
+    }
+    
+    console.log('[Interfacing] Script loaded');
     
 })();
