@@ -584,3 +584,103 @@
 .interfacing-panel-content::-webkit-scrollbar-thumb:hover {
     background: var(--if-border-highlight);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════════════════════════ */
+
+.interfacing-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.interfacing-modal-content {
+    background: var(--if-bg-primary);
+    border: 1px solid var(--if-border);
+    border-radius: var(--if-panel-radius);
+    width: 90%;
+    max-width: 400px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.interfacing-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--if-bg-secondary);
+    border-bottom: 1px solid var(--if-border);
+    font-weight: 600;
+    color: var(--if-accent);
+}
+
+.interfacing-modal-close {
+    background: none;
+    border: none;
+    color: var(--if-text-secondary);
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.interfacing-modal-body {
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.presets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.preset-item {
+    background: var(--if-bg-secondary);
+    border-radius: 6px;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.preset-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--if-text-primary);
+}
+
+.preset-category {
+    font-size: 10px;
+    color: var(--if-text-muted);
+    text-transform: uppercase;
+}
+
+.preset-mods {
+    width: 100%;
+    font-size: 11px;
+    color: var(--if-text-secondary);
+}
+
+.preset-equip {
+    padding: 4px 10px;
+    font-size: 11px;
+    background: var(--if-accent);
+    color: var(--if-bg-primary);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.preset-equip:hover {
+    opacity: 0.8;
+}

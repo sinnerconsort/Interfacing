@@ -1,261 +1,622 @@
 /**
  * Interfacing - Disco Elysium Gameplay Systems
  * Companion extension to Inland Empire
- * 
- * Systems:
- * - Inventory/Equipment (stat modifiers from items)
- * - Vitals (Health/Morale pools)
- * - Choice Suggestions (skill checks for dialogue options)
  */
 
-import { initInventory, getEquippedModifiers } from './systems/inventory.js';
-import { initVitals, getVitals, damageHealth, damageMorale } from './systems/vitals.js';
-import { initPanel, showPanel, hidePanel, updateVitalsDisplay } from './ui/panel.js';
-import { PRESET_ITEMS } from './data/items.js';
-
-// ═══════════════════════════════════════════════════════════════
-// EXTENSION STATE
-// ═══════════════════════════════════════════════════════════════
-
-const extensionName = 'Interfacing';
-const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
-
-let IE = null;  // Reference to Inland Empire API
-let isIEConnected = false;
-let extensionSettings = {};
-
-const DEFAULT_SETTINGS = {
-    enabled: true,
-    // Vitals
-    baseHealth: 3,
-    baseMorale: 3,
-    showVitalsWidget: true,
-    // Inventory
-    autoDetectItems: true,
-    generateDescriptions: true,
-    // Choice Suggestions
-    choiceSuggestionsEnabled: true,
-    showChoicesInline: true,
-    // UI
-    panelPositionTop: 100,
-    panelPositionLeft: 60
-};
-
-// ═══════════════════════════════════════════════════════════════
-// INLAND EMPIRE INTEGRATION
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Wait for IE to be ready, or proceed without it
- */
-function connectToInlandEmpire() {
-    // Check if already loaded
-    if (window.InlandEmpire) {
-        onIEConnected(window.InlandEmpire);
-        return;
+(function() {
+    'use strict';
+    
+    const extensionName = 'Interfacing';
+    
+    // ═══════════════════════════════════════════════════════════════
+    // PRESET ITEMS DATA
+    // ═══════════════════════════════════════════════════════════════
+    
+    const PRESET_ITEMS = {
+        horrific_necktie: {
+            id: 'horrific_necktie',
+            name: 'Horrific Necktie',
+            category: 'clothes',
+            slot: 'neck',
+            modifiers: { inland_empire: 2, electrochemistry: 1, composure: -1 }
+        },
+        hideous_necktie: {
+            id: 'hideous_necktie', 
+            name: 'Hideous Tie',
+            category: 'clothes',
+            slot: 'neck',
+            modifiers: { electrochemistry: 1, suggestion: -1 }
+        },
+        faln_pipo_hat: {
+            id: 'faln_pipo_hat',
+            name: 'FALN "Pipo" Pipo',
+            category: 'clothes',
+            slot: 'hat',
+            modifiers: { logic: 2, perception: 1 }
+        },
+        aerostatic_pilot_jacket: {
+            id: 'aerostatic_pilot_jacket',
+            name: 'Aerostatic Pilot Jacket',
+            category: 'clothes',
+            slot: 'jacket',
+            modifiers: { conceptualization: 1, inland_empire: 1, esprit_de_corps: 1, authority: -1 }
+        },
+        disco_ass_blazer: {
+            id: 'disco_ass_blazer',
+            name: 'Disco-Ass Blazer',
+            category: 'clothes',
+            slot: 'jacket',
+            modifiers: { electrochemistry: 2, savoir_faire: 1, suggestion: 1, logic: -1 }
+        },
+        green_snakeskin_shoes: {
+            id: 'green_snakeskin_shoes',
+            name: 'Green Snakeskin Shoes',
+            category: 'clothes',
+            slot: 'shoes',
+            modifiers: { savoir_faire: 1, composure: -1 }
+        },
+        fingerless_gloves: {
+            id: 'fingerless_gloves',
+            name: 'Fingerless Gloves',
+            category: 'clothes',
+            slot: 'gloves',
+            modifiers: { electrochemistry: 1 }
+        },
+        flashlight: {
+            id: 'flashlight',
+            name: 'Flashlight',
+            category: 'tools',
+            modifiers: { perception: 1, visual_calculus: 1 }
+        },
+        prybar: {
+            id: 'prybar',
+            name: 'Prybar',
+            category: 'tools',
+            modifiers: { physical_instrument: 1, interfacing: 1 }
+        },
+        tape_recorder: {
+            id: 'tape_recorder',
+            name: 'Tape Recorder',
+            category: 'tools',
+            modifiers: { esprit_de_corps: 1, rhetoric: 1 }
+        },
+        yellow_plastic_bag: {
+            id: 'yellow_plastic_bag',
+            name: 'Yellow Plastic Bag "Frittte!"',
+            category: 'tools',
+            modifiers: { shivers: 1, savoir_faire: -1 }
+        },
+        cigarettes_astra: {
+            id: 'cigarettes_astra',
+            name: 'Astra Cigarettes',
+            category: 'consumable',
+            quantity: 5,
+            duration: 10,
+            modifiers: { composure: 1, volition: 1, endurance: -1 }
+        },
+        pyrholidon: {
+            id: 'pyrholidon',
+            name: 'Pyrholidon',
+            category: 'consumable',
+            quantity: 1,
+            duration: 15,
+            modifiers: { reaction_speed: 1, perception: 1, logic: 1, composure: -1 }
+        },
+        alcohol_commodore_red: {
+            id: 'alcohol_commodore_red',
+            name: 'Commodore Red',
+            category: 'consumable',
+            quantity: 1,
+            duration: 20,
+            modifiers: { electrochemistry: 2, inland_empire: 1, logic: -1, hand_eye_coordination: -1 }
+        }
+    };
+    
+    // ═══════════════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════════════
+    
+    let IE = null;
+    let isIEConnected = false;
+    let extensionSettings = { enabled: true, baseHealth: 3, baseMorale: 3 };
+    
+    let equipped = { clothes: {}, tools: [], held: [] };
+    let consumables = [];
+    let activeEffects = [];
+    let allItems = Object.assign({}, PRESET_ITEMS);
+    
+    let vitals = {
+        health: { current: 3, max: 3 },
+        morale: { current: 3, max: 3 }
+    };
+    
+    let panelElement = null;
+    let vitalsWidgetElement = null;
+    let fabElement = null;
+    let isPanelOpen = false;
+    let currentTab = 'inventory';
+    
+    // ═══════════════════════════════════════════════════════════════
+    // INVENTORY
+    // ═══════════════════════════════════════════════════════════════
+    
+    function equipItem(itemOrId) {
+        var item = typeof itemOrId === 'string' ? allItems[itemOrId] : itemOrId;
+        if (!item) return null;
+        
+        var previousItem = null;
+        
+        if (item.category === 'clothes') {
+            if (item.slot) {
+                previousItem = equipped.clothes[item.slot] || null;
+                equipped.clothes[item.slot] = item;
+            }
+        } else if (item.category === 'tools') {
+            if (!equipped.tools.find(function(t) { return t.id === item.id; })) {
+                equipped.tools.push(item);
+            }
+        } else if (item.category === 'held') {
+            if (equipped.held.length >= 2) {
+                previousItem = equipped.held.shift();
+            }
+            if (!equipped.held.find(function(h) { return h.id === item.id; })) {
+                equipped.held.push(item);
+            }
+        } else if (item.category === 'consumable') {
+            addConsumable(item);
+            return null;
+        }
+        
+        syncItemToIE(item, true);
+        if (previousItem) syncItemToIE(previousItem, false);
+        return previousItem;
     }
     
-    // Listen for IE ready event
-    document.addEventListener('ie:ready', (e) => {
-        console.log(`[${extensionName}] Inland Empire connected, version:`, e.detail?.version);
-        onIEConnected(window.InlandEmpire);
-    });
-    
-    // Timeout fallback - run standalone if IE doesn't load
-    setTimeout(() => {
-        if (!isIEConnected) {
-            console.log(`[${extensionName}] Running without Inland Empire integration`);
-            initStandalone();
+    function unequipItem(itemOrId) {
+        var itemId = typeof itemOrId === 'string' ? itemOrId : itemOrId.id;
+        var removed = null;
+        
+        Object.keys(equipped.clothes).forEach(function(slot) {
+            if (equipped.clothes[slot] && equipped.clothes[slot].id === itemId) {
+                removed = equipped.clothes[slot];
+                delete equipped.clothes[slot];
+            }
+        });
+        
+        if (!removed) {
+            var toolIdx = equipped.tools.findIndex(function(t) { return t.id === itemId; });
+            if (toolIdx !== -1) removed = equipped.tools.splice(toolIdx, 1)[0];
         }
-    }, 3000);
-}
-
-/**
- * Called when IE is available
- */
-function onIEConnected(ieApi) {
-    IE = ieApi;
-    isIEConnected = true;
+        
+        if (!removed) {
+            var heldIdx = equipped.held.findIndex(function(h) { return h.id === itemId; });
+            if (heldIdx !== -1) removed = equipped.held.splice(heldIdx, 1)[0];
+        }
+        
+        if (removed) syncItemToIE(removed, false);
+        renderCurrentTab();
+        return removed;
+    }
     
-    // Subscribe to IE events
-    document.addEventListener('ie:skill-check', onSkillCheck);
-    document.addEventListener('ie:modifier-changed', onModifierChanged);
+    function getEquippedItems() {
+        var items = [];
+        Object.values(equipped.clothes).forEach(function(item) { if (item) items.push(item); });
+        items = items.concat(equipped.tools);
+        items = items.concat(equipped.held);
+        return items;
+    }
     
-    // Push any existing equipment modifiers to IE
-    syncEquipmentToIE();
-    
-    // Initialize vitals with IE skill levels
-    initVitalsWithIE();
-}
-
-/**
- * Standalone mode when IE isn't available
- */
-function initStandalone() {
-    console.log(`[${extensionName}] Standalone mode - limited functionality`);
-    // Vitals and inventory still work, just without skill-based calculations
-    initVitals(extensionSettings.baseHealth, extensionSettings.baseMorale);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// EVENT HANDLERS
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * React to skill checks from IE
- */
-function onSkillCheck(event) {
-    const { skillId, success, isSnakeEyes, isBoxcars, attribute } = event.detail;
-    
-    if (!success) {
-        // Failed checks damage vitals based on attribute
-        if (attribute === 'PHYSIQUE' || attribute === 'MOTORICS') {
-            damageHealth(1);
+    function addConsumable(itemOrId, quantity) {
+        quantity = quantity || 1;
+        var item = typeof itemOrId === 'string' ? allItems[itemOrId] : itemOrId;
+        if (!item || item.category !== 'consumable') return;
+        
+        var existing = consumables.find(function(c) { return c.item.id === item.id; });
+        if (existing) {
+            existing.quantity += quantity;
         } else {
-            damageMorale(1);
+            consumables.push({ item: item, quantity: quantity });
         }
     }
     
-    // Critical failure = extra damage
-    if (isSnakeEyes) {
-        if (attribute === 'PHYSIQUE' || attribute === 'MOTORICS') {
-            damageHealth(1);
-        } else {
-            damageMorale(1);
+    function useConsumable(itemId) {
+        var consumable = consumables.find(function(c) { return c.item.id === itemId; });
+        if (!consumable || consumable.quantity <= 0) return null;
+        
+        consumable.quantity--;
+        if (consumable.quantity <= 0) {
+            consumables = consumables.filter(function(c) { return c.item.id !== itemId; });
         }
-    }
-    
-    // Critical success = heal
-    if (isBoxcars) {
-        // Could heal here, or trigger something special
-    }
-    
-    updateVitalsDisplay();
-}
-
-/**
- * React to modifier changes (from IE or other sources)
- */
-function onModifierChanged(event) {
-    // Could update UI, recalculate things, etc.
-    console.log(`[${extensionName}] Modifier changed:`, event.detail);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// IE BRIDGE FUNCTIONS
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Push all equipped item modifiers to IE
- */
-function syncEquipmentToIE() {
-    if (!IE) return;
-    
-    const modifiers = getEquippedModifiers();
-    for (const [sourceId, skillMods] of Object.entries(modifiers)) {
-        for (const [skillId, value] of Object.entries(skillMods)) {
-            IE.registerModifier(sourceId, skillId, value);
-        }
-    }
-}
-
-/**
- * Initialize vitals using IE skill levels
- */
-function initVitalsWithIE() {
-    const endurance = IE?.getEffectiveSkillLevel?.('endurance') || 2;
-    const volition = IE?.getEffectiveSkillLevel?.('volition') || 2;
-    
-    const maxHealth = extensionSettings.baseHealth + endurance;
-    const maxMorale = extensionSettings.baseMorale + volition;
-    
-    initVitals(maxHealth, maxMorale);
-}
-
-/**
- * Get voice data from IE for item descriptions
- */
-export function getVoiceData(skillId) {
-    if (!IE) return null;
-    return IE.getSkillData?.(skillId) || null;
-}
-
-/**
- * Roll a skill check through IE
- */
-export function rollCheck(skillId, difficulty) {
-    if (!IE) {
-        // Fallback: simple 2d6 roll
-        const roll = Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6) + 1;
-        return {
-            success: roll >= difficulty,
-            total: roll,
-            isBoxcars: roll === 12,
-            isSnakeEyes: roll === 2
+        
+        var effect = {
+            itemId: consumable.item.id,
+            item: consumable.item,
+            messagesRemaining: consumable.item.duration || 10,
+            modifiers: Object.assign({}, consumable.item.modifiers)
         };
+        
+        activeEffects.push(effect);
+        syncConsumableToIE(effect, true);
+        renderCurrentTab();
+        return effect;
     }
-    return IE.rollCheck(skillId, difficulty);
-}
-
-/**
- * Check if IE is connected
- */
-export function hasIE() {
-    return isIEConnected;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// INITIALIZATION
-// ═══════════════════════════════════════════════════════════════
-
-/**
- * Load settings from SillyTavern
- */
-function loadSettings(context) {
-    if (context?.extensionSettings?.interfacing) {
-        extensionSettings = { ...DEFAULT_SETTINGS, ...context.extensionSettings.interfacing };
+    
+    function getAggregatedBonuses() {
+        var totals = {};
+        getEquippedItems().forEach(function(item) {
+            if (item.modifiers) {
+                Object.keys(item.modifiers).forEach(function(skillId) {
+                    totals[skillId] = (totals[skillId] || 0) + item.modifiers[skillId];
+                });
+            }
+        });
+        activeEffects.forEach(function(effect) {
+            Object.keys(effect.modifiers).forEach(function(skillId) {
+                totals[skillId] = (totals[skillId] || 0) + effect.modifiers[skillId];
+            });
+        });
+        return totals;
+    }
+    
+    function formatModifier(value) { return value > 0 ? '+' + value : '' + value; }
+    
+    function formatSkillName(skillId) {
+        return skillId.split('_').map(function(w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // VITALS
+    // ═══════════════════════════════════════════════════════════════
+    
+    function initVitals(maxHealth, maxMorale) {
+        vitals.health.max = maxHealth;
+        vitals.health.current = maxHealth;
+        vitals.morale.max = maxMorale;
+        vitals.morale.current = maxMorale;
+        updateVitalsDisplay();
+    }
+    
+    function damageHealth(amount) {
+        vitals.health.current = Math.max(0, vitals.health.current - amount);
+        updateVitalsDisplay();
+    }
+    
+    function damageMorale(amount) {
+        vitals.morale.current = Math.max(0, vitals.morale.current - amount);
+        updateVitalsDisplay();
+    }
+    
+    function healHealth(amount) {
+        vitals.health.current = Math.min(vitals.health.max, vitals.health.current + amount);
+        updateVitalsDisplay();
+    }
+    
+    function healMorale(amount) {
+        vitals.morale.current = Math.min(vitals.morale.max, vitals.morale.current + amount);
+        updateVitalsDisplay();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // IE INTEGRATION
+    // ═══════════════════════════════════════════════════════════════
+    
+    function connectToInlandEmpire() {
+        if (window.InlandEmpire) {
+            onIEConnected(window.InlandEmpire);
+            return;
+        }
+        
+        document.addEventListener('ie:ready', function() {
+            console.log('[Interfacing] IE connected');
+            onIEConnected(window.InlandEmpire);
+        });
+        
+        setTimeout(function() {
+            if (!isIEConnected) {
+                console.log('[Interfacing] Running standalone');
+                initVitals(extensionSettings.baseHealth || 3, extensionSettings.baseMorale || 3);
+            }
+        }, 3000);
+    }
+    
+    function onIEConnected(ieApi) {
+        IE = ieApi;
+        isIEConnected = true;
+        
+        document.addEventListener('ie:skill-check', onSkillCheck);
+        
+        var endurance = IE.getEffectiveSkillLevel ? IE.getEffectiveSkillLevel('endurance') : 2;
+        var volition = IE.getEffectiveSkillLevel ? IE.getEffectiveSkillLevel('volition') : 2;
+        initVitals((extensionSettings.baseHealth || 3) + endurance, (extensionSettings.baseMorale || 3) + volition);
+        
+        getEquippedItems().forEach(function(item) { syncItemToIE(item, true); });
+    }
+    
+    function onSkillCheck(event) {
+        var d = event.detail || {};
+        if (!d.success) {
+            if (d.attribute === 'PHYSIQUE' || d.attribute === 'MOTORICS') damageHealth(1);
+            else damageMorale(1);
+        }
+        if (d.isSnakeEyes) {
+            if (d.attribute === 'PHYSIQUE' || d.attribute === 'MOTORICS') damageHealth(1);
+            else damageMorale(1);
+        }
+    }
+    
+    function syncItemToIE(item, isEquipping) {
+        if (!IE || !IE.registerModifier) return;
+        if (isEquipping && item.modifiers) {
+            Object.keys(item.modifiers).forEach(function(skillId) {
+                IE.registerModifier(item.id, skillId, item.modifiers[skillId]);
+            });
+        } else if (IE.removeModifierSource) {
+            IE.removeModifierSource(item.id);
+        }
+    }
+    
+    function syncConsumableToIE(effect, isApplying) {
+        if (!IE || !IE.registerModifier) return;
+        var sourceId = 'consumable_' + effect.itemId;
+        if (isApplying) {
+            Object.keys(effect.modifiers).forEach(function(skillId) {
+                IE.registerModifier(sourceId, skillId, effect.modifiers[skillId]);
+            });
+        } else if (IE.removeModifierSource) {
+            IE.removeModifierSource(sourceId);
+        }
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // UI
+    // ═══════════════════════════════════════════════════════════════
+    
+    function createFAB() {
+        fabElement = document.createElement('div');
+        fabElement.id = 'interfacing-fab';
+        fabElement.className = 'interfacing-fab';
+        fabElement.innerHTML = '🔧';
+        fabElement.title = 'Interfacing';
+        fabElement.addEventListener('click', togglePanel);
+        document.body.appendChild(fabElement);
+    }
+    
+    function createVitalsWidget() {
+        vitalsWidgetElement = document.createElement('div');
+        vitalsWidgetElement.id = 'interfacing-vitals-widget';
+        vitalsWidgetElement.className = 'interfacing-vitals-widget';
+        updateVitalsDisplay();
+        document.body.appendChild(vitalsWidgetElement);
+    }
+    
+    function updateVitalsDisplay() {
+        if (!vitalsWidgetElement) return;
+        var hp = (vitals.health.current / vitals.health.max) * 100;
+        var mp = (vitals.morale.current / vitals.morale.max) * 100;
+        var hc = vitals.health.current <= vitals.health.max * 0.25 ? 'critical' : '';
+        var mc = vitals.morale.current <= vitals.morale.max * 0.25 ? 'critical' : '';
+        
+        vitalsWidgetElement.innerHTML = 
+            '<div class="vital-row"><span class="vital-label">HEALTH</span>' +
+            '<div class="vital-bar-container"><div class="vital-bar health ' + hc + '" style="width:' + hp + '%"></div></div>' +
+            '<span class="vital-value">' + vitals.health.current + '/' + vitals.health.max + '</span></div>' +
+            '<div class="vital-row"><span class="vital-label">MORALE</span>' +
+            '<div class="vital-bar-container"><div class="vital-bar morale ' + mc + '" style="width:' + mp + '%"></div></div>' +
+            '<span class="vital-value">' + vitals.morale.current + '/' + vitals.morale.max + '</span></div>';
+    }
+    
+    function createPanel() {
+        panelElement = document.createElement('div');
+        panelElement.id = 'interfacing-panel';
+        panelElement.className = 'interfacing-panel hidden';
+        
+        panelElement.innerHTML = 
+            '<div class="interfacing-panel-header">' +
+                '<span class="interfacing-panel-icon">🔧</span>' +
+                '<span class="interfacing-panel-title">INTERFACING</span>' +
+                '<button class="interfacing-panel-close">×</button>' +
+            '</div>' +
+            '<div class="interfacing-tabs">' +
+                '<button class="interfacing-tab active" data-tab="inventory">📦 Inventory</button>' +
+                '<button class="interfacing-tab" data-tab="vitals">💔 Vitals</button>' +
+            '</div>' +
+            '<div class="interfacing-panel-content"></div>';
+        
+        panelElement.querySelector('.interfacing-panel-close').addEventListener('click', hidePanel);
+        panelElement.querySelectorAll('.interfacing-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() { switchTab(tab.dataset.tab); });
+        });
+        
+        document.body.appendChild(panelElement);
+        renderCurrentTab();
+    }
+    
+    function switchTab(tabId) {
+        currentTab = tabId;
+        panelElement.querySelectorAll('.interfacing-tab').forEach(function(tab) {
+            tab.classList.toggle('active', tab.dataset.tab === tabId);
+        });
+        renderCurrentTab();
+    }
+    
+    function renderCurrentTab() {
+        if (!panelElement) return;
+        var content = panelElement.querySelector('.interfacing-panel-content');
+        if (currentTab === 'inventory') {
+            content.innerHTML = renderInventoryTab();
+            attachInventoryListeners(content);
+        } else if (currentTab === 'vitals') {
+            content.innerHTML = renderVitalsTab();
+            attachVitalsListeners(content);
+        }
+    }
+    
+    function renderInventoryTab() {
+        var bonuses = getAggregatedBonuses();
+        var html = '<div class="inventory-tab">';
+        
+        html += '<section class="inventory-section"><h3>// EQUIPPED</h3><div class="equipped-grid">';
+        html += renderEquippedCategory('clothes', '👔', 'Clothes');
+        html += renderEquippedCategory('tools', '🔧', 'Tools');
+        html += renderEquippedCategory('held', '✋', 'Held');
+        html += '</div></section>';
+        
+        html += '<section class="inventory-section bonuses-section"><h3>// BONUSES FROM ITEMS</h3>';
+        html += '<div class="bonuses-list">' + renderBonuses(bonuses) + '</div></section>';
+        
+        html += '<section class="inventory-section"><h3>// CONSUMABLES</h3>';
+        html += '<div class="consumables-list">' + renderConsumables() + '</div></section>';
+        
+        html += '<section class="inventory-section">';
+        html += '<button class="add-item-btn wide" data-action="browse-presets">📋 Browse Presets</button>';
+        html += '</section></div>';
+        
+        return html;
+    }
+    
+    function renderEquippedCategory(category, icon, label) {
+        var items = getEquippedItems().filter(function(i) { return i.category === category; });
+        var html = '<div class="equipped-category"><div class="category-header">' +
+            '<span class="category-icon">' + icon + '</span><span class="category-label">' + label + '</span></div>' +
+            '<div class="equipped-items">';
+        
+        if (items.length === 0) {
+            html += '<div class="empty-slot">Empty</div>';
+        } else {
+            items.forEach(function(item) {
+                var mods = Object.keys(item.modifiers || {}).map(function(k) {
+                    return formatModifier(item.modifiers[k]) + ' ' + formatSkillName(k);
+                }).join(', ');
+                html += '<div class="equipped-item"><div class="item-name">' + item.name + '</div>' +
+                    '<div class="item-modifiers">' + mods + '</div>' +
+                    '<button class="item-remove" data-action="unequip" data-item-id="' + item.id + '">×</button></div>';
+            });
+        }
+        html += '</div></div>';
+        return html;
+    }
+    
+    function renderBonuses(bonuses) {
+        var entries = Object.entries(bonuses).sort(function(a, b) { return b[1] - a[1]; });
+        if (entries.length === 0) return '<div class="no-bonuses">No equipment bonuses</div>';
+        return entries.map(function(e) {
+            var cls = e[1] > 0 ? 'bonus-positive' : 'bonus-negative';
+            return '<div class="bonus-row ' + cls + '"><span class="bonus-skill">' + formatSkillName(e[0]) + 
+                '</span><span class="bonus-value">' + formatModifier(e[1]) + '</span></div>';
+        }).join('');
+    }
+    
+    function renderConsumables() {
+        if (consumables.length === 0 && activeEffects.length === 0) {
+            return '<div class="no-consumables">No consumables</div>';
+        }
+        var html = '';
+        activeEffects.forEach(function(e) {
+            html += '<div class="consumable-item active"><span class="consumable-icon">⚡</span>' +
+                '<span class="consumable-name">' + e.item.name + '</span>' +
+                '<span class="consumable-duration">' + e.messagesRemaining + ' msgs</span></div>';
+        });
+        consumables.forEach(function(c) {
+            html += '<div class="consumable-item"><span class="consumable-icon">💊</span>' +
+                '<span class="consumable-name">' + c.item.name + '</span>' +
+                '<span class="consumable-quantity">×' + c.quantity + '</span>' +
+                '<button class="consumable-use" data-action="use" data-item-id="' + c.item.id + '">Use</button></div>';
+        });
+        return html;
+    }
+    
+    function renderVitalsTab() {
+        var hp = (vitals.health.current / vitals.health.max) * 100;
+        var mp = (vitals.morale.current / vitals.morale.max) * 100;
+        return '<div class="vitals-tab">' +
+            '<section class="vitals-section"><h3>// HEALTH</h3>' +
+            '<div class="vital-display health"><div class="vital-bar-large">' +
+            '<div class="vital-fill" style="width:' + hp + '%"></div></div>' +
+            '<div class="vital-numbers">' + vitals.health.current + ' / ' + vitals.health.max + '</div></div>' +
+            '<p class="vital-description">Physical damage. When this reaches zero, you die.</p>' +
+            '<div class="vital-controls"><button data-action="damage-health">−1</button>' +
+            '<button data-action="heal-health">+1</button></div></section>' +
+            '<section class="vitals-section"><h3>// MORALE</h3>' +
+            '<div class="vital-display morale"><div class="vital-bar-large">' +
+            '<div class="vital-fill" style="width:' + mp + '%"></div></div>' +
+            '<div class="vital-numbers">' + vitals.morale.current + ' / ' + vitals.morale.max + '</div></div>' +
+            '<p class="vital-description">Psychological damage. When this reaches zero, you give up.</p>' +
+            '<div class="vital-controls"><button data-action="damage-morale">−1</button>' +
+            '<button data-action="heal-morale">+1</button></div></section></div>';
+    }
+    
+    function attachInventoryListeners(content) {
+        content.querySelectorAll('[data-action="unequip"]').forEach(function(btn) {
+            btn.addEventListener('click', function(e) { unequipItem(e.target.dataset.itemId); });
+        });
+        content.querySelectorAll('[data-action="use"]').forEach(function(btn) {
+            btn.addEventListener('click', function(e) { useConsumable(e.target.dataset.itemId); });
+        });
+        var pb = content.querySelector('[data-action="browse-presets"]');
+        if (pb) pb.addEventListener('click', showPresetsDialog);
+    }
+    
+    function attachVitalsListeners(content) {
+        var dh = content.querySelector('[data-action="damage-health"]');
+        var hh = content.querySelector('[data-action="heal-health"]');
+        var dm = content.querySelector('[data-action="damage-morale"]');
+        var hm = content.querySelector('[data-action="heal-morale"]');
+        if (dh) dh.addEventListener('click', function() { damageHealth(1); renderCurrentTab(); });
+        if (hh) hh.addEventListener('click', function() { healHealth(1); renderCurrentTab(); });
+        if (dm) dm.addEventListener('click', function() { damageMorale(1); renderCurrentTab(); });
+        if (hm) hm.addEventListener('click', function() { healMorale(1); renderCurrentTab(); });
+    }
+    
+    function showPresetsDialog() {
+        var modal = document.createElement('div');
+        modal.className = 'interfacing-modal';
+        var itemsHtml = Object.values(PRESET_ITEMS).map(function(item) {
+            var mods = Object.keys(item.modifiers || {}).map(function(k) {
+                return formatModifier(item.modifiers[k]) + ' ' + formatSkillName(k);
+            }).join(', ');
+            return '<div class="preset-item"><div class="preset-name">' + item.name + '</div>' +
+                '<div class="preset-category">' + item.category + '</div>' +
+                '<div class="preset-mods">' + mods + '</div>' +
+                '<button class="preset-equip" data-item-id="' + item.id + '">Equip</button></div>';
+        }).join('');
+        
+        modal.innerHTML = '<div class="interfacing-modal-content">' +
+            '<div class="interfacing-modal-header"><span>Browse Presets</span>' +
+            '<button class="interfacing-modal-close">×</button></div>' +
+            '<div class="interfacing-modal-body"><div class="presets-list">' + itemsHtml + '</div></div></div>';
+        
+        modal.querySelector('.interfacing-modal-close').addEventListener('click', function() { modal.remove(); });
+        modal.querySelectorAll('.preset-equip').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                equipItem(e.target.dataset.itemId);
+                modal.remove();
+                renderCurrentTab();
+            });
+        });
+        document.body.appendChild(modal);
+    }
+    
+    function showPanel() { if (panelElement) { panelElement.classList.remove('hidden'); isPanelOpen = true; renderCurrentTab(); } }
+    function hidePanel() { if (panelElement) { panelElement.classList.add('hidden'); isPanelOpen = false; } }
+    function togglePanel() { isPanelOpen ? hidePanel() : showPanel(); }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════════════════════════════
+    
+    function init() {
+        console.log('[Interfacing] Initializing...');
+        createFAB();
+        createVitalsWidget();
+        createPanel();
+        connectToInlandEmpire();
+        console.log('[Interfacing] Ready');
+    }
+    
+    if (typeof jQuery !== 'undefined') {
+        jQuery(init);
     } else {
-        extensionSettings = { ...DEFAULT_SETTINGS };
+        document.addEventListener('DOMContentLoaded', init);
     }
-}
-
-/**
- * Save settings to SillyTavern
- */
-export function saveSettings(context) {
-    if (context?.extensionSettings) {
-        context.extensionSettings.interfacing = extensionSettings;
-        context.saveSettingsDebounced?.();
-    }
-}
-
-/**
- * Main initialization
- */
-jQuery(async () => {
-    const context = SillyTavern?.getContext?.();
     
-    console.log(`[${extensionName}] Initializing...`);
-    
-    // Load settings
-    loadSettings(context);
-    
-    // Initialize systems
-    initInventory();
-    initPanel(context);
-    
-    // Try to connect to Inland Empire
-    connectToInlandEmpire();
-    
-    console.log(`[${extensionName}] Initialized successfully`);
-});
-
-// ═══════════════════════════════════════════════════════════════
-// EXPORTS (for other modules)
-// ═══════════════════════════════════════════════════════════════
-
-export {
-    extensionSettings,
-    IE,
-    isIEConnected
-};
+})();
