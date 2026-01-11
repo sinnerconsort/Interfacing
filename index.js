@@ -3,12 +3,8 @@
  * Companion extension to Inland Empire
  */
 
-console.log('[Interfacing] Script file loaded');
-
 (function() {
     'use strict';
-    
-    console.log('[Interfacing] IIFE executing');
     
     const extensionName = 'Interfacing';
     
@@ -381,8 +377,8 @@ console.log('[Interfacing] Script file loaded');
         fabElement.className = 'interfacing-fab';
         fabElement.innerHTML = '🔧';
         fabElement.title = 'Interfacing';
-        // Inline styles as fallback
-        fabElement.style.cssText = 'position:fixed;bottom:120px;left:60px;width:44px;height:44px;background:#252530;border:2px solid #bfa127;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,0.4);';
+        // Inline styles - RIGHT side of screen for mobile visibility
+        fabElement.style.cssText = 'position:fixed;bottom:80px;right:10px;width:44px;height:44px;background:#252530;border:2px solid #bfa127;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,0.4);';
         fabElement.addEventListener('click', togglePanel);
         document.body.appendChild(fabElement);
         console.log('[Interfacing] FAB created');
@@ -392,8 +388,8 @@ console.log('[Interfacing] Script file loaded');
         vitalsWidgetElement = document.createElement('div');
         vitalsWidgetElement.id = 'interfacing-vitals-widget';
         vitalsWidgetElement.className = 'interfacing-vitals-widget';
-        // Inline styles as fallback
-        vitalsWidgetElement.style.cssText = 'position:fixed;bottom:170px;left:60px;width:140px;background:#1a1a1f;border:1px solid #3a3a4a;border-radius:6px;padding:8px;z-index:99998;font-family:Segoe UI,system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+        // Inline styles - RIGHT side, above FAB
+        vitalsWidgetElement.style.cssText = 'position:fixed;bottom:130px;right:10px;width:140px;background:#1a1a1f;border:1px solid #3a3a4a;border-radius:6px;padding:8px;z-index:99998;font-family:Segoe UI,system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
         updateVitalsDisplay();
         document.body.appendChild(vitalsWidgetElement);
         console.log('[Interfacing] Vitals widget created');
@@ -686,21 +682,8 @@ console.log('[Interfacing] Script file loaded');
         try {
             // Show a toast notification so we know it's running
             if (typeof toastr !== 'undefined') {
-                toastr.info('Interfacing extension loaded!', 'Interfacing');
+                toastr.info('Interfacing loaded!', 'Interfacing', {timeOut: 2000});
             }
-            
-            // Debug: create a very visible test element
-            var testEl = document.createElement('div');
-            testEl.id = 'interfacing-debug-test';
-            testEl.innerHTML = '🔧 Interfacing Loaded!';
-            testEl.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:red;color:white;padding:20px;font-size:24px;z-index:999999;border-radius:10px;';
-            document.body.appendChild(testEl);
-            console.log('[Interfacing] Debug test element created');
-            
-            // Remove after 3 seconds
-            setTimeout(function() {
-                if (testEl.parentNode) testEl.parentNode.removeChild(testEl);
-            }, 3000);
             
             addExtensionPanel();
             createFAB();
@@ -708,10 +691,6 @@ console.log('[Interfacing] Script file loaded');
             createPanel();
             connectToInlandEmpire();
             console.log('[Interfacing] Ready');
-            
-            if (typeof toastr !== 'undefined') {
-                toastr.success('UI created successfully', 'Interfacing');
-            }
         } catch (e) {
             console.error('[Interfacing] Init error:', e);
             if (typeof toastr !== 'undefined') {
@@ -722,35 +701,28 @@ console.log('[Interfacing] Script file loaded');
     
     // Try multiple initialization methods
     function tryInit() {
-        console.log('[Interfacing] tryInit called');
         if (document.body) {
             init();
         } else {
-            console.log('[Interfacing] Body not ready, waiting...');
             setTimeout(tryInit, 100);
         }
     }
     
     // Method 1: jQuery
     if (typeof jQuery !== 'undefined') {
-        console.log('[Interfacing] Using jQuery init');
         jQuery(function() {
             setTimeout(tryInit, 1000);
         });
     } 
     // Method 2: DOMContentLoaded
     else if (document.readyState === 'loading') {
-        console.log('[Interfacing] Using DOMContentLoaded init');
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(tryInit, 1000);
         });
     } 
     // Method 3: Already loaded
     else {
-        console.log('[Interfacing] DOM already ready, direct init');
         setTimeout(tryInit, 1000);
     }
-    
-    console.log('[Interfacing] Script loaded');
     
 })();

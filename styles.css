@@ -38,8 +38,8 @@
 
 .interfacing-fab {
     position: fixed;
-    bottom: 120px;
-    left: 60px;
+    bottom: 80px;
+    right: 10px;
     width: 44px;
     height: 44px;
     background: #252530;
@@ -66,8 +66,8 @@
 
 .interfacing-vitals-widget {
     position: fixed;
-    bottom: 170px;
-    left: 60px;
+    bottom: 130px;
+    right: 10px;
     width: 140px;
     background: #1a1a1f;
     border: 1px solid #3a3a4a;
