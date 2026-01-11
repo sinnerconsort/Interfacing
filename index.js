@@ -7,6 +7,7 @@
     'use strict';
     
     const extensionName = 'Interfacing';
+    const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
     
     // ═══════════════════════════════════════════════════════════════
     // PRESET ITEMS DATA
@@ -372,88 +373,57 @@
     // ═══════════════════════════════════════════════════════════════
     
     function createFAB() {
-        // Try multiple locations where ST extensions put their buttons
-        
-        // Option 1: Add to ST's left-side menu buttons (wand container area)
-        var leftMenu = document.getElementById('leftSendForm') || 
-                       document.getElementById('leftSideBar') ||
-                       document.querySelector('#form_sheld .flex-container');
-        
-        // Option 2: Add to the data_controls area like other extension icons
-        var dataControls = document.getElementById('data_controls') ||
-                          document.querySelector('.drawer-content');
-        
-        // Option 3: Just append to body with very explicit positioning
         fabElement = document.createElement('div');
         fabElement.id = 'interfacing-fab';
-        fabElement.className = 'interfacing-fab';
         fabElement.innerHTML = '🔧';
-        fabElement.title = 'Interfacing - Click to open panel';
+        fabElement.title = 'Interfacing';
         
-        // Try to match IE's positioning - it appears on the left near the brain icon
-        // Use !important to override any conflicts
+        // Position at bottom-left, above where IE's icons are
         fabElement.setAttribute('style', 
-            'position: fixed !important;' +
-            'bottom: 140px !important;' +
-            'left: 5px !important;' +
-            'width: 40px !important;' +
-            'height: 40px !important;' +
-            'background: #252530 !important;' +
-            'border: 2px solid #bfa127 !important;' +
-            'border-radius: 8px !important;' +
-            'display: flex !important;' +
-            'align-items: center !important;' +
-            'justify-content: center !important;' +
-            'font-size: 18px !important;' +
-            'cursor: pointer !important;' +
-            'z-index: 9999 !important;' +
-            'box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;' +
-            'visibility: visible !important;' +
-            'opacity: 1 !important;'
+            'position: fixed; ' +
+            'bottom: 250px; ' +
+            'left: 10px; ' +
+            'width: 40px; ' +
+            'height: 40px; ' +
+            'background: #252530; ' +
+            'border: 2px solid #bfa127; ' +
+            'border-radius: 8px; ' +
+            'display: flex; ' +
+            'align-items: center; ' +
+            'justify-content: center; ' +
+            'font-size: 18px; ' +
+            'cursor: pointer; ' +
+            'z-index: 9999; ' +
+            'box-shadow: 0 2px 8px rgba(0,0,0,0.5);'
         );
         
         fabElement.addEventListener('click', togglePanel);
         document.body.appendChild(fabElement);
-        
-        // Also try adding to extensionsMenu if it exists (where other extension icons go)
-        var extMenu = document.getElementById('extensionsMenu');
-        if (extMenu) {
-            var menuButton = document.createElement('div');
-            menuButton.id = 'interfacing-menu-button';
-            menuButton.className = 'extension-menu-button';
-            menuButton.innerHTML = '<span class="fa-solid fa-wrench" title="Interfacing"></span>';
-            menuButton.style.cssText = 'cursor:pointer;padding:5px;';
-            menuButton.addEventListener('click', togglePanel);
-            extMenu.appendChild(menuButton);
-            console.log('[Interfacing] Added to extensionsMenu');
-        }
-        
-        console.log('[Interfacing] FAB created, parent:', fabElement.parentElement?.tagName);
+        console.log('[Interfacing] FAB created');
     }
     
     function createVitalsWidget() {
         vitalsWidgetElement = document.createElement('div');
         vitalsWidgetElement.id = 'interfacing-vitals-widget';
-        vitalsWidgetElement.className = 'interfacing-vitals-widget';
-        // Use !important to override any conflicts - position above FAB
+        
+        // Position above FAB
         vitalsWidgetElement.setAttribute('style',
-            'position: fixed !important;' +
-            'bottom: 190px !important;' +
-            'left: 5px !important;' +
-            'width: 130px !important;' +
-            'background: #1a1a1f !important;' +
-            'border: 1px solid #3a3a4a !important;' +
-            'border-radius: 6px !important;' +
-            'padding: 8px !important;' +
-            'z-index: 9998 !important;' +
-            'font-family: Segoe UI, system-ui, sans-serif !important;' +
-            'box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;' +
-            'visibility: visible !important;' +
-            'opacity: 1 !important;'
+            'position: fixed; ' +
+            'bottom: 300px; ' +
+            'left: 10px; ' +
+            'width: 130px; ' +
+            'background: #1a1a1f; ' +
+            'border: 1px solid #3a3a4a; ' +
+            'border-radius: 6px; ' +
+            'padding: 8px; ' +
+            'z-index: 9998; ' +
+            'font-family: Segoe UI, system-ui, sans-serif; ' +
+            'box-shadow: 0 2px 8px rgba(0,0,0,0.3);'
         );
+        
         updateVitalsDisplay();
         document.body.appendChild(vitalsWidgetElement);
-        console.log('[Interfacing] Vitals widget created, parent:', vitalsWidgetElement.parentElement?.tagName);
+        console.log('[Interfacing] Vitals widget created');
     }
     
     function updateVitalsDisplay() {
@@ -684,106 +654,92 @@
     function togglePanel() { isPanelOpen ? hidePanel() : showPanel(); }
     
     // ═══════════════════════════════════════════════════════════════
-    // ST EXTENSION PANEL
+    // ST EXTENSION PANEL (like IE does)
     // ═══════════════════════════════════════════════════════════════
     
     function addExtensionPanel() {
+        const container = document.getElementById('extensions_settings');
+        if (!container) {
+            console.log('[Interfacing] extensions_settings not found');
+            return;
+        }
+        
         const settingsHtml = `
-        <div id="interfacing-settings" class="extension_settings">
-            <div class="inline-drawer">
+            <div class="inline-drawer" id="interfacing-extension-settings">
                 <div class="inline-drawer-toggle inline-drawer-header">
                     <b>🔧 Interfacing</b>
                     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
                 </div>
                 <div class="inline-drawer-content">
-                    <div class="interfacing-settings-content">
-                        <p>Disco Elysium gameplay systems - inventory, vitals, and more.</p>
-                        <div class="flex-container">
-                            <label for="interfacing-enabled">
-                                <input type="checkbox" id="interfacing-enabled" checked />
-                                Enable Interfacing
-                            </label>
-                        </div>
-                        <hr>
-                        <div class="flex-container">
-                            <button id="interfacing-open-panel" class="menu_button">Open Panel</button>
-                        </div>
-                        <hr>
-                        <small>FAB and vitals widget should appear at bottom-left of screen.</small>
+                    <div style="padding: 10px;">
+                        <p style="margin: 0 0 10px; color: #888;">Disco Elysium gameplay systems.</p>
+                        <label class="checkbox_label">
+                            <input type="checkbox" id="interfacing-ext-enabled" checked />
+                            <span>Enable Interfacing</span>
+                        </label>
+                        <hr style="margin: 10px 0; border-color: #444;">
+                        <button id="interfacing-open-panel-btn" class="menu_button" style="width: 100%;">
+                            Open Panel
+                        </button>
+                        <hr style="margin: 10px 0; border-color: #444;">
+                        <small style="color: #666;">FAB appears at bottom-right of screen.</small>
                     </div>
                 </div>
             </div>
-        </div>`;
+        `;
         
-        // Find the extensions container
-        const container = document.getElementById('extensions_settings');
-        if (container) {
-            container.insertAdjacentHTML('beforeend', settingsHtml);
-            
-            // Add click handler for open panel button
-            const openBtn = document.getElementById('interfacing-open-panel');
-            if (openBtn) {
-                openBtn.addEventListener('click', function() {
-                    showPanel();
-                });
-            }
-            
-            console.log('[Interfacing] Extension panel added to ST');
-        } else {
-            console.log('[Interfacing] Could not find extensions_settings container');
-        }
+        container.insertAdjacentHTML('beforeend', settingsHtml);
+        
+        // Bind open panel button
+        document.getElementById('interfacing-open-panel-btn')?.addEventListener('click', function() {
+            showPanel();
+        });
+        
+        console.log('[Interfacing] Extension panel added');
     }
     
     // ═══════════════════════════════════════════════════════════════
-    // INIT
+    // INIT - Matching IE's pattern exactly
     // ═══════════════════════════════════════════════════════════════
     
-    function init() {
+    async function init() {
         console.log('[Interfacing] Initializing...');
+        
         try {
-            // Show a toast notification so we know it's running
-            if (typeof toastr !== 'undefined') {
-                toastr.info('Interfacing loaded!', 'Interfacing', {timeOut: 2000});
-            }
+            // Load CSS explicitly like IE does
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = `${extensionFolderPath}/styles.css`;
+            document.head.appendChild(link);
+            console.log('[Interfacing] CSS loaded');
             
+            // Create extension settings in ST's extension panel (like IE)
             addExtensionPanel();
+            
+            // Create UI elements
             createFAB();
             createVitalsWidget();
             createPanel();
+            
+            // Try to connect to Inland Empire
             connectToInlandEmpire();
-            console.log('[Interfacing] Ready');
-        } catch (e) {
-            console.error('[Interfacing] Init error:', e);
+            
+            console.log('[Interfacing] Ready!');
+            
             if (typeof toastr !== 'undefined') {
-                toastr.error('Error: ' + e.message, 'Interfacing');
+                toastr.success('Interfacing loaded!', 'Interfacing', {timeOut: 3000});
+            }
+        } catch (error) {
+            console.error('[Interfacing] Failed to initialize:', error);
+            if (typeof toastr !== 'undefined') {
+                toastr.error('Init failed: ' + error.message, 'Interfacing');
             }
         }
     }
     
-    // Try multiple initialization methods
-    function tryInit() {
-        if (document.body) {
-            init();
-        } else {
-            setTimeout(tryInit, 100);
-        }
-    }
-    
-    // Method 1: jQuery
-    if (typeof jQuery !== 'undefined') {
-        jQuery(function() {
-            setTimeout(tryInit, 1000);
-        });
-    } 
-    // Method 2: DOMContentLoaded
-    else if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(tryInit, 1000);
-        });
-    } 
-    // Method 3: Already loaded
-    else {
-        setTimeout(tryInit, 1000);
-    }
+    // Use jQuery ready like IE does
+    jQuery(async () => {
+        await init();
+    });
     
 })();
