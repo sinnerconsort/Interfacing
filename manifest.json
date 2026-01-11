@@ -1,0 +1,12 @@
+{
+    "display_name": "Interfacing",
+    "loading_order": 15,
+    "requires": [],
+    "optional": ["inland-empire"],
+    "js": "index.js",
+    "css": "styles.css",
+    "author": "SinnerConsort",
+    "version": "0.1.0",
+    "description": "Disco Elysium-style inventory, vitals, and choice systems. Companion to Inland Empire.",
+    "homePage": "https://github.com/sinnerconsort/Interfacing"
+}
