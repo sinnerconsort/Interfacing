@@ -372,27 +372,88 @@
     // ═══════════════════════════════════════════════════════════════
     
     function createFAB() {
+        // Try multiple locations where ST extensions put their buttons
+        
+        // Option 1: Add to ST's left-side menu buttons (wand container area)
+        var leftMenu = document.getElementById('leftSendForm') || 
+                       document.getElementById('leftSideBar') ||
+                       document.querySelector('#form_sheld .flex-container');
+        
+        // Option 2: Add to the data_controls area like other extension icons
+        var dataControls = document.getElementById('data_controls') ||
+                          document.querySelector('.drawer-content');
+        
+        // Option 3: Just append to body with very explicit positioning
         fabElement = document.createElement('div');
         fabElement.id = 'interfacing-fab';
         fabElement.className = 'interfacing-fab';
         fabElement.innerHTML = '🔧';
-        fabElement.title = 'Interfacing';
-        // Inline styles - RIGHT side of screen for mobile visibility
-        fabElement.style.cssText = 'position:fixed;bottom:80px;right:10px;width:44px;height:44px;background:#252530;border:2px solid #bfa127;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,0.4);';
+        fabElement.title = 'Interfacing - Click to open panel';
+        
+        // Try to match IE's positioning - it appears on the left near the brain icon
+        // Use !important to override any conflicts
+        fabElement.setAttribute('style', 
+            'position: fixed !important;' +
+            'bottom: 140px !important;' +
+            'left: 5px !important;' +
+            'width: 40px !important;' +
+            'height: 40px !important;' +
+            'background: #252530 !important;' +
+            'border: 2px solid #bfa127 !important;' +
+            'border-radius: 8px !important;' +
+            'display: flex !important;' +
+            'align-items: center !important;' +
+            'justify-content: center !important;' +
+            'font-size: 18px !important;' +
+            'cursor: pointer !important;' +
+            'z-index: 9999 !important;' +
+            'box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;' +
+            'visibility: visible !important;' +
+            'opacity: 1 !important;'
+        );
+        
         fabElement.addEventListener('click', togglePanel);
         document.body.appendChild(fabElement);
-        console.log('[Interfacing] FAB created');
+        
+        // Also try adding to extensionsMenu if it exists (where other extension icons go)
+        var extMenu = document.getElementById('extensionsMenu');
+        if (extMenu) {
+            var menuButton = document.createElement('div');
+            menuButton.id = 'interfacing-menu-button';
+            menuButton.className = 'extension-menu-button';
+            menuButton.innerHTML = '<span class="fa-solid fa-wrench" title="Interfacing"></span>';
+            menuButton.style.cssText = 'cursor:pointer;padding:5px;';
+            menuButton.addEventListener('click', togglePanel);
+            extMenu.appendChild(menuButton);
+            console.log('[Interfacing] Added to extensionsMenu');
+        }
+        
+        console.log('[Interfacing] FAB created, parent:', fabElement.parentElement?.tagName);
     }
     
     function createVitalsWidget() {
         vitalsWidgetElement = document.createElement('div');
         vitalsWidgetElement.id = 'interfacing-vitals-widget';
         vitalsWidgetElement.className = 'interfacing-vitals-widget';
-        // Inline styles - RIGHT side, above FAB
-        vitalsWidgetElement.style.cssText = 'position:fixed;bottom:130px;right:10px;width:140px;background:#1a1a1f;border:1px solid #3a3a4a;border-radius:6px;padding:8px;z-index:99998;font-family:Segoe UI,system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.3);';
+        // Use !important to override any conflicts - position above FAB
+        vitalsWidgetElement.setAttribute('style',
+            'position: fixed !important;' +
+            'bottom: 190px !important;' +
+            'left: 5px !important;' +
+            'width: 130px !important;' +
+            'background: #1a1a1f !important;' +
+            'border: 1px solid #3a3a4a !important;' +
+            'border-radius: 6px !important;' +
+            'padding: 8px !important;' +
+            'z-index: 9998 !important;' +
+            'font-family: Segoe UI, system-ui, sans-serif !important;' +
+            'box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;' +
+            'visibility: visible !important;' +
+            'opacity: 1 !important;'
+        );
         updateVitalsDisplay();
         document.body.appendChild(vitalsWidgetElement);
-        console.log('[Interfacing] Vitals widget created');
+        console.log('[Interfacing] Vitals widget created, parent:', vitalsWidgetElement.parentElement?.tagName);
     }
     
     function updateVitalsDisplay() {
