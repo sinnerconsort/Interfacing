@@ -10,356 +10,6 @@
     const extensionFolderPath = `scripts/extensions/third-party/${extensionName}`;
     
     // ═══════════════════════════════════════════════════════════════
-    // PRESET ITEMS DATA
-    // ═══════════════════════════════════════════════════════════════
-    
-    const PRESET_ITEMS = {
-        // ─────────────────────────────────────────────────────────────
-        // CLOTHES - NECK
-        // ─────────────────────────────────────────────────────────────
-        horrific_necktie: {
-            id: 'horrific_necktie',
-            name: 'Horrific Necktie',
-            category: 'clothes',
-            slot: 'neck',
-            icon: '👔',
-            modifiers: { inland_empire: 2, esprit_de_corps: 1, authority: -1 },
-            description: "The necktie is adorned with a garish pattern. It's disturbingly vivid. Somehow you feel as if it would be wrong to ever take it off.",
-            voiceDescriptions: {
-                inland_empire: {
-                    check: 'Easy', success: true,
-                    text: "No one is saying the multi-patterned necktie you found tied to the ceiling fan can *talk*. No one. It must be merely *imagination*, but...",
-                    comment: "HORRIFIC NECKTIE – Let's bail! Time to push the EJECT button. Sounds like a *responsibility*. You don't like those."
-                },
-                authority: {
-                    check: 'Medium', success: false,
-                    text: "This tie undermines everything you're trying to project. No one will take you seriously wearing this... thing."
-                }
-            }
-        },
-        
-        // ─────────────────────────────────────────────────────────────
-        // CLOTHES - HAT
-        // ─────────────────────────────────────────────────────────────
-        faln_pipo_hat: {
-            id: 'faln_pipo_hat',
-            name: 'FALN "Pipo" Hat',
-            category: 'clothes',
-            slot: 'hat',
-            icon: '🧢',
-            modifiers: { esprit_de_corps: 2, rhetoric: 1, authority: -1 },
-            description: "A cheap synthetic fiber hat with the FALN logo. Standard issue for the Revolutionary Youth.",
-            voiceDescriptions: {
-                esprit_de_corps: {
-                    check: 'Medium', success: true,
-                    text: "You feel it. The camaraderie of the downtrodden. The shared struggle. Somewhere, comrades are fighting.",
-                    comment: "ESPRIT DE CORPS – Brothers and sisters in arms. They wore these in the fields, in the factories. Now you wear it too."
-                },
-                authority: {
-                    check: 'Easy', success: false,
-                    text: "Revolutionary headwear? Really? You're supposed to be the law, not the resistance."
-                }
-            }
-        },
-        
-        cuno_cap: {
-            id: 'cuno_cap',
-            name: "Cuno's Cap",
-            category: 'clothes',
-            slot: 'hat',
-            icon: '🧢',
-            modifiers: { suggestion: 2, authority: -2 },
-            description: "A grimy baseball cap. The previous owner was... memorable.",
-            voiceDescriptions: {
-                suggestion: {
-                    check: 'Medium', success: true,
-                    text: "Street cred, baby. The kids will think you're cool. Or crazy. Same thing, really.",
-                    comment: "SUGGESTION – Cuno doesn't care. Cuno doesn't give a f—. And neither do you. Not anymore."
-                }
-            }
-        },
-        
-        // ─────────────────────────────────────────────────────────────
-        // CLOTHES - JACKET
-        // ─────────────────────────────────────────────────────────────
-        disco_ass_blazer: {
-            id: 'disco_ass_blazer',
-            name: 'Disco-Ass Blazer',
-            category: 'clothes',
-            slot: 'jacket',
-            icon: '🧥',
-            modifiers: { electrochemistry: 2, savoir_faire: 1, suggestion: 1, logic: -1 },
-            description: "A flashy blazer with a shimmering disco pattern. It screams 'party' and whispers 'poor decisions'.",
-            voiceDescriptions: {
-                electrochemistry: {
-                    check: 'Easy', success: true,
-                    text: "Oh YEAH. This jacket knows things. It's been to places. It's *done* things. Put it on and let the good times roll.",
-                    comment: "ELECTROCHEMISTRY – This baby's seen more dance floors than a disco ball. Wear it. *Become* the party."
-                },
-                logic: {
-                    check: 'Easy', success: false,
-                    text: "This is not professional attire. This is not *any* kind of appropriate attire. Why would you wear this?"
-                }
-            }
-        },
-        
-        aerostatic_pilot_jacket: {
-            id: 'aerostatic_pilot_jacket',
-            name: 'Aerostatic Pilot Jacket',
-            category: 'clothes',
-            slot: 'jacket',
-            icon: '🧥',
-            modifiers: { conceptualization: 1, inland_empire: 1, esprit_de_corps: 1, authority: -1 },
-            description: "A worn leather jacket from the Aerostatic Corps. Smells like adventure and engine oil.",
-            voiceDescriptions: {
-                conceptualization: {
-                    check: 'Medium', success: true,
-                    text: "You're not just wearing a jacket. You're wearing the *idea* of flight. Of escape. Of becoming something more.",
-                    comment: "CONCEPTUALIZATION – Every scratch tells a story. Every stain is a memory of the clouds."
-                },
-                inland_empire: {
-                    check: 'Easy', success: true,
-                    text: "The jacket remembers things. The pilots who wore it. The skies they crossed. Put it on and *listen*."
-                }
-            }
-        },
-        
-        // ─────────────────────────────────────────────────────────────
-        // CLOTHES - SHOES
-        // ─────────────────────────────────────────────────────────────
-        green_snakeskin_shoes: {
-            id: 'green_snakeskin_shoes',
-            name: 'Green Snakeskin Shoes',
-            category: 'clothes',
-            slot: 'shoes',
-            icon: '👟',
-            modifiers: { savoir_faire: 1, composure: -1 },
-            description: "Flashy green shoes made from synthetic snakeskin. They make a statement. Not necessarily a good one.",
-            voiceDescriptions: {
-                savoir_faire: {
-                    check: 'Easy', success: true,
-                    text: "These shoes have *presence*. They enter a room before you do. Own it.",
-                    comment: "SAVOIR FAIRE – Bold choice. Controversial. But undeniably memorable."
-                },
-                composure: {
-                    check: 'Easy', success: false,
-                    text: "People are staring at your feet. They're *always* staring at your feet now."
-                }
-            }
-        },
-        
-        // ─────────────────────────────────────────────────────────────
-        // CLOTHES - GLOVES
-        // ─────────────────────────────────────────────────────────────
-        fingerless_gloves: {
-            id: 'fingerless_gloves',
-            name: 'Fingerless Gloves',
-            category: 'clothes',
-            slot: 'gloves',
-            icon: '🧤',
-            modifiers: { interfacing: 1, electrochemistry: 1 },
-            description: "Black leather gloves with the fingers cut off. For when you need dexterity and style.",
-            voiceDescriptions: {
-                interfacing: {
-                    check: 'Easy', success: true,
-                    text: "Your fingertips are free. You can *feel* the world. Locks, wires, machinery—all of it speaks to you.",
-                    comment: "INTERFACING – Touch is knowledge. These let you learn."
-                }
-            }
-        },
-        
-        // ─────────────────────────────────────────────────────────────
-        // CLOTHES - GLASSES
-        // ─────────────────────────────────────────────────────────────
-        pigs_glasses: {
-            id: 'pigs_glasses',
-            name: 'Pigs Glasses',
-            category: 'clothes',
-            slot: 'glasses',
-            icon: '🕶️',
-            modifiers: { authority: 2, empathy: -1 },
-            description: "Mirrored aviator sunglasses. The kind cops wear when they want to look intimidating.",
-            voiceDescriptions: {
-                authority: {
-                    check: 'Easy', success: true,
-                    text: "Perfect. They can't see your eyes. They don't know what you're thinking. You're in control.",
-                    comment: "AUTHORITY – Hide behind the mirror. Let them see only what you want them to see."
-                },
-                empathy: {
-                    check: 'Medium', success: false,
-                    text: "You can't connect with people if they can't see your eyes. You're building walls."
-                }
-            }
-        },
-        
-        // ─────────────────────────────────────────────────────────────
-        // TOOLS
-        // ─────────────────────────────────────────────────────────────
-        flashlight: {
-            id: 'flashlight',
-            name: 'Flashlight',
-            category: 'tools',
-            icon: '🔦',
-            modifiers: { perception: 1, visual_calculus: 1 },
-            description: "A standard-issue police flashlight. Heavy enough to double as a weapon.",
-            voiceDescriptions: {
-                perception: {
-                    check: 'Easy', success: true,
-                    text: "Light cuts through darkness. Secrets hide in shadows. This is your sword against the unknown.",
-                    comment: "PERCEPTION – Point it at the truth. Force it into the light."
-                }
-            }
-        },
-        
-        prybar: {
-            id: 'prybar',
-            name: 'Prybar',
-            category: 'tools',
-            icon: '🔧',
-            modifiers: { physical_instrument: 2, interfacing: 1, savoir_faire: -1 },
-            description: "A red-tipped prybar with 'Gaston T. Heavy Duty' engraved below the handle. Satisfyingly heavy.",
-            voiceDescriptions: {
-                physical_instrument: {
-                    check: 'Easy', success: true,
-                    text: "Oh, this is a good one. Solid steel. You could open *anything* with this. Doors. Crates. Skulls.",
-                    comment: "PHYSICAL INSTRUMENT – Feel that weight? That's potential energy. Kinetic problem-solving."
-                },
-                savoir_faire: {
-                    check: 'Easy', success: false,
-                    text: "There's nothing elegant about this. It's a caveman's solution to a lockpick's problem."
-                }
-            }
-        },
-        
-        tape_recorder: {
-            id: 'tape_recorder',
-            name: 'Tape Recorder',
-            category: 'tools',
-            icon: '📼',
-            modifiers: { esprit_de_corps: 1, rhetoric: 1, drama: 1 },
-            description: "A portable tape recorder. Good for interviews. Better for catching people in lies.",
-            voiceDescriptions: {
-                rhetoric: {
-                    check: 'Medium', success: true,
-                    text: "Record everything. Words are slippery—pin them down. Make them accountable.",
-                    comment: "RHETORIC – The tape doesn't lie. People do. Let them hang themselves."
-                }
-            }
-        },
-        
-        yellow_plastic_bag: {
-            id: 'yellow_plastic_bag',
-            name: 'Yellow Plastic Bag "Frittte!"',
-            category: 'tools',
-            icon: '🛍️',
-            modifiers: { shivers: 1, composure: -1 },
-            description: "This plastic bag has 'Frittte' (sic!) written on it. Smells of yeast and beer. Perfect for collecting tare.",
-            voiceDescriptions: {
-                shivers: {
-                    check: 'Medium', success: true,
-                    text: "The bag crinkles in the wind. It's been everywhere. Seen everything. A humble witness to the city's decay.",
-                    comment: "SHIVERS – The plastic remembers. Every hand that held it. Every corner it blew through."
-                },
-                composure: {
-                    check: 'Easy', success: false,
-                    text: "You're carrying your belongings in a beer bag. This is what your life has become."
-                }
-            }
-        },
-        
-        // ─────────────────────────────────────────────────────────────
-        // CONSUMABLES
-        // ─────────────────────────────────────────────────────────────
-        cigarettes_astra: {
-            id: 'cigarettes_astra',
-            name: 'Astra Cigarettes',
-            category: 'consumable',
-            icon: '🚬',
-            quantity: 5,
-            duration: 10,
-            modifiers: { composure: 1, volition: 1, endurance: -1 },
-            description: "A pack of Astra cigarettes. The smoke steadies your nerves.",
-            voiceDescriptions: {
-                composure: {
-                    check: 'Easy', success: true,
-                    text: "Breathe it in. Let the smoke fill your lungs. Feel the calm wash over you.",
-                    comment: "COMPOSURE – A moment of peace in a world of chaos. You've earned this."
-                }
-            },
-            isConsumable: true
-        },
-        
-        pyrholidon: {
-            id: 'pyrholidon',
-            name: 'Pyrholidon',
-            category: 'consumable',
-            icon: '💊',
-            quantity: 1,
-            duration: 15,
-            modifiers: { logic: 2, conceptualization: 2, visual_calculus: 1, inland_empire: -2, shivers: -1 },
-            description: "A nootropic compound. Makes you sharp. Cold. Calculating. The world becomes a problem to solve.",
-            voiceDescriptions: {
-                logic: {
-                    check: 'Easy', success: true,
-                    text: "Yes. Take it. Let the noise fade. Let only the *signal* remain. Pure, crystalline thought.",
-                    comment: "LOGIC – Your mind becomes a scalpel. Cut away the fat. Get to the truth."
-                },
-                inland_empire: {
-                    check: 'Hard', success: false,
-                    text: "No! Don't silence us! The whispers have meaning! You need the *noise*!"
-                }
-            },
-            isConsumable: true
-        },
-        
-        alcohol_commodore_red: {
-            id: 'alcohol_commodore_red',
-            name: 'Commodore Red',
-            category: 'consumable',
-            icon: '🍷',
-            quantity: 1,
-            duration: 20,
-            modifiers: { electrochemistry: 2, pain_threshold: 1, inland_empire: 1, logic: -1, hand_eye_coordination: -1 },
-            description: "Cheap fortified wine. It burns going down and makes everything else hurt less.",
-            voiceDescriptions: {
-                electrochemistry: {
-                    check: 'Easy', success: true,
-                    text: "Ah, the sweet embrace of fortified wine. It's not good, but it's *yours*. Drink deep.",
-                    comment: "ELECTROCHEMISTRY – The world is hard. This makes it soft. Simple math."
-                },
-                logic: {
-                    check: 'Easy', success: false,
-                    text: "You're drinking cheap wine to dull the pain of existence. This is not a solution."
-                }
-            },
-            isConsumable: true
-        },
-        
-        speed: {
-            id: 'speed',
-            name: 'Speed',
-            category: 'consumable',
-            icon: '💎',
-            quantity: 1,
-            duration: 12,
-            modifiers: { reaction_speed: 3, perception: 2, volition: -2, composure: -2 },
-            description: "Amphetamines. Everything moves faster. Including your heart. Including your paranoia.",
-            voiceDescriptions: {
-                reaction_speed: {
-                    check: 'Medium', success: true,
-                    text: "FASTER. You need to be FASTER. The world is moving and you need to KEEP UP.",
-                    comment: "REACTION SPEED – Time dilates. You can see the bullets. Dodge the raindrops. Go go GO."
-                },
-                volition: {
-                    check: 'Hard', success: false,
-                    text: "This isn't strength. This is borrowed time. You're going to crash. You always crash."
-                }
-            },
-            isConsumable: true
-        }
-    };
-    
-    // ═══════════════════════════════════════════════════════════════
     // STATE
     // ═══════════════════════════════════════════════════════════════
     
@@ -377,7 +27,6 @@
     let equipped = { clothes: {}, tools: [], held: [] };
     let consumables = [];
     let activeEffects = [];
-    let allItems = Object.assign({}, PRESET_ITEMS);
     
     let vitals = {
         health: { current: 3, max: 3 },
@@ -392,7 +41,7 @@
     
     // Ledger state - tasks/quests journal
     let ledger = {
-        officerInitials: 'HDB', // Default to Harry Du Bois, can be customized
+        officerInitials: 'HDB',
         caseNumber: 41,
         tasks: {
             active: [],
@@ -404,8 +53,7 @@
     // INVENTORY
     // ═══════════════════════════════════════════════════════════════
     
-    function equipItem(itemOrId) {
-        var item = typeof itemOrId === 'string' ? allItems[itemOrId] : itemOrId;
+    function equipItem(item) {
         if (!item) return null;
         
         var previousItem = null;
@@ -470,9 +118,8 @@
         return items;
     }
     
-    function addConsumable(itemOrId, quantity) {
+    function addConsumable(item, quantity) {
         quantity = quantity || 1;
-        var item = typeof itemOrId === 'string' ? allItems[itemOrId] : itemOrId;
         if (!item || item.category !== 'consumable') return;
         
         var existing = consumables.find(function(c) { return c.item.id === item.id; });
@@ -641,7 +288,6 @@
         fabElement.innerHTML = '🔧';
         fabElement.title = 'Interfacing';
         
-        // TOP-RIGHT corner - definitely visible
         fabElement.setAttribute('style', 
             'position: fixed; ' +
             'top: 60px; ' +
@@ -671,21 +317,19 @@
         makeDraggable(fabElement, 'fabPosition');
         document.body.appendChild(fabElement);
         
-        // Restore saved position
         if (extensionSettings.fabPosition) {
             fabElement.style.top = extensionSettings.fabPosition.top + 'px';
             fabElement.style.right = 'auto';
             fabElement.style.left = extensionSettings.fabPosition.left + 'px';
         }
         
-        console.log('[Interfacing] FAB created at top-right');
+        console.log('[Interfacing] FAB created');
     }
     
     function createVitalsWidget() {
         vitalsWidgetElement = document.createElement('div');
         vitalsWidgetElement.id = 'interfacing-vitals-widget';
         
-        // Below FAB in top-right
         vitalsWidgetElement.setAttribute('style',
             'position: fixed; ' +
             'top: 110px; ' +
@@ -704,7 +348,6 @@
         
         makeDraggable(vitalsWidgetElement, 'vitalsPosition');
         
-        // Restore saved position
         if (extensionSettings.vitalsPosition) {
             vitalsWidgetElement.style.top = extensionSettings.vitalsPosition.top + 'px';
             vitalsWidgetElement.style.right = 'auto';
@@ -713,7 +356,7 @@
         
         updateVitalsDisplay();
         document.body.appendChild(vitalsWidgetElement);
-        console.log('[Interfacing] Vitals widget created at top-right');
+        console.log('[Interfacing] Vitals widget created');
     }
     
     function makeDraggable(element, saveKey) {
@@ -758,7 +401,6 @@
             var newLeft = startLeft + dx;
             var newTop = startTop + dy;
             
-            // Keep in bounds
             newLeft = Math.max(0, Math.min(window.innerWidth - element.offsetWidth, newLeft));
             newTop = Math.max(0, Math.min(window.innerHeight - element.offsetHeight, newTop));
             
@@ -773,7 +415,6 @@
                     left: parseInt(element.style.left),
                     top: parseInt(element.style.top)
                 };
-                // Save to ST if available
                 saveSettings();
             }
             
@@ -783,7 +424,6 @@
             document.removeEventListener('touchmove', drag);
             document.removeEventListener('touchend', stopDrag);
             
-            // Clear justDragged after a short delay
             setTimeout(function() {
                 element.dataset.justDragged = '';
             }, 100);
@@ -794,7 +434,6 @@
         try {
             var context = typeof SillyTavern !== 'undefined' ? SillyTavern.getContext() : null;
             if (context && context.extensionSettings) {
-                // Save ledger to extensionSettings
                 extensionSettings.ledger = ledger;
                 context.extensionSettings.interfacing = extensionSettings;
                 context.saveSettingsDebounced();
@@ -810,16 +449,13 @@
             if (context && context.extensionSettings && context.extensionSettings.interfacing) {
                 var saved = context.extensionSettings.interfacing;
                 
-                // Merge saved settings
                 if (saved.fabPosition) extensionSettings.fabPosition = saved.fabPosition;
                 if (saved.vitalsPosition) extensionSettings.vitalsPosition = saved.vitalsPosition;
                 if (saved.baseHealth) extensionSettings.baseHealth = saved.baseHealth;
                 if (saved.baseMorale) extensionSettings.baseMorale = saved.baseMorale;
                 
-                // Load ledger
                 if (saved.ledger) {
                     ledger = saved.ledger;
-                    // Ensure arrays exist
                     if (!ledger.tasks) ledger.tasks = { active: [], completed: [] };
                     if (!ledger.tasks.active) ledger.tasks.active = [];
                     if (!ledger.tasks.completed) ledger.tasks.completed = [];
@@ -839,9 +475,8 @@
         var hCrit = vitals.health.current <= vitals.health.max * 0.25;
         var mCrit = vitals.morale.current <= vitals.morale.max * 0.25;
         
-        // DE colors: Health #110e05 (dark amber), Morale #0d738a (teal)
-        var healthColor = hCrit ? '#ff4444' : '#c4a35a'; // Brighter amber for visibility, red when critical
-        var moraleColor = mCrit ? '#ff4444' : '#0d738a'; // DE teal, red when critical
+        var healthColor = hCrit ? '#ff4444' : '#c4a35a';
+        var moraleColor = mCrit ? '#ff4444' : '#0d738a';
         
         vitalsWidgetElement.innerHTML = 
             '<div style="margin-bottom:6px;">' +
@@ -866,7 +501,6 @@
         panelElement = document.createElement('div');
         panelElement.id = 'interfacing-panel';
         panelElement.className = 'interfacing-panel hidden';
-        // Inline styles as fallback
         panelElement.style.cssText = 'position:fixed;top:100px;left:60px;width:340px;max-height:70vh;background:#1a1a1f;border:1px solid #3a3a4a;border-radius:8px;z-index:100000;font-family:Segoe UI,system-ui,sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.5);display:none;flex-direction:column;overflow:hidden;';
         
         panelElement.innerHTML = 
@@ -930,9 +564,7 @@
         html += '<section class="inventory-section"><h3>// CONSUMABLES</h3>';
         html += '<div class="consumables-list">' + renderConsumables() + '</div></section>';
         
-        html += '<section class="inventory-section">';
-        html += '<button class="add-item-btn wide" data-action="browse-presets">📋 Browse Presets</button>';
-        html += '</section></div>';
+        html += '</div>';
         
         return html;
     }
@@ -991,7 +623,6 @@
     function renderVitalsTab() {
         var hp = (vitals.health.current / vitals.health.max) * 100;
         var mp = (vitals.morale.current / vitals.morale.max) * 100;
-        // Use DE colors
         var healthColor = '#c4a35a';
         var moraleColor = '#0d738a';
         return '<div class="vitals-tab">' +
@@ -1014,13 +645,11 @@
     function renderLedgerTab() {
         var html = '<div class="ledger-tab" style="padding:12px;">';
         
-        // Case header
         html += '<div class="ledger-header" style="margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #3a3a4a;">';
         html += '<div style="font-size:10px;color:#666;text-transform:uppercase;">Case File</div>';
         html += '<div style="font-size:14px;color:#c4a35a;font-weight:bold;">' + ledger.officerInitials + ledger.caseNumber.toString().padStart(3, '0') + '</div>';
         html += '</div>';
         
-        // Active tasks
         html += '<section class="ledger-section">';
         html += '<h3 style="font-size:11px;color:#888;margin:0 0 8px 0;text-transform:uppercase;">// Active Tasks</h3>';
         
@@ -1041,7 +670,6 @@
         }
         html += '</section>';
         
-        // Completed tasks (collapsed by default if many)
         html += '<section class="ledger-section" style="margin-top:12px;">';
         html += '<h3 style="font-size:11px;color:#666;margin:0 0 8px 0;text-transform:uppercase;">// Completed (' + ledger.tasks.completed.length + ')</h3>';
         
@@ -1056,13 +684,11 @@
         }
         html += '</section>';
         
-        // Add task input
         html += '<div class="ledger-add" style="margin-top:12px;padding-top:12px;border-top:1px solid #3a3a4a;">';
         html += '<input type="text" id="ledger-new-task" placeholder="New task..." style="width:100%;background:#252530;border:1px solid #3a3a4a;border-radius:4px;padding:8px;color:#ddd;font-size:12px;box-sizing:border-box;">';
         html += '<button data-action="add-task" style="width:100%;margin-top:6px;background:#3a3a4a;border:none;color:#aaa;padding:8px;border-radius:4px;cursor:pointer;font-size:11px;">+ Add Task</button>';
         html += '</div>';
         
-        // Officer settings
         html += '<div class="ledger-settings" style="margin-top:12px;padding-top:12px;border-top:1px solid #3a3a4a;">';
         html += '<div style="font-size:10px;color:#555;margin-bottom:6px;">Officer Initials</div>';
         html += '<input type="text" id="ledger-initials" value="' + ledger.officerInitials + '" maxlength="4" style="width:60px;background:#252530;border:1px solid #3a3a4a;border-radius:4px;padding:4px 8px;color:#c4a35a;font-size:12px;text-transform:uppercase;">';
@@ -1073,7 +699,6 @@
     }
     
     function attachLedgerListeners(content) {
-        // Add task
         var addBtn = content.querySelector('[data-action="add-task"]');
         var input = content.querySelector('#ledger-new-task');
         
@@ -1095,7 +720,6 @@
             });
         }
         
-        // Complete task
         content.querySelectorAll('[data-action="complete-task"]').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var idx = parseInt(btn.dataset.idx);
@@ -1109,7 +733,6 @@
             });
         });
         
-        // Update initials
         var initialsInput = content.querySelector('#ledger-initials');
         if (initialsInput) {
             initialsInput.addEventListener('change', function() {
@@ -1127,8 +750,6 @@
         content.querySelectorAll('[data-action="use"]').forEach(function(btn) {
             btn.addEventListener('click', function(e) { useConsumable(e.target.dataset.itemId); });
         });
-        var pb = content.querySelector('[data-action="browse-presets"]');
-        if (pb) pb.addEventListener('click', showPresetsDialog);
     }
     
     function attachVitalsListeners(content) {
@@ -1140,198 +761,6 @@
         if (hh) hh.addEventListener('click', function() { healHealth(1); renderCurrentTab(); });
         if (dm) dm.addEventListener('click', function() { damageMorale(1); renderCurrentTab(); });
         if (hm) hm.addEventListener('click', function() { healMorale(1); renderCurrentTab(); });
-    }
-    
-    function showPresetsDialog() {
-        var modal = document.createElement('div');
-        modal.id = 'interfacing-presets-modal';
-        modal.className = 'interfacing-modal';
-        // Full screen overlay
-        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:200000;';
-        
-        // Group items by category
-        var clothes = [];
-        var tools = [];
-        var consumables = [];
-        
-        Object.values(PRESET_ITEMS).forEach(function(item) {
-            if (item.category === 'clothes') clothes.push(item);
-            else if (item.category === 'tools') tools.push(item);
-            else if (item.category === 'consumable') consumables.push(item);
-        });
-        
-        function renderItemCard(item) {
-            var mods = Object.entries(item.modifiers || {}).map(function(entry) {
-                var k = entry[0], v = entry[1];
-                var color = v > 0 ? '#4a9' : '#a54';
-                return '<span style="color:' + color + ';">' + formatModifier(v) + ' ' + formatSkillName(k) + '</span>';
-            }).join(', ');
-            
-            var slotLabel = item.slot ? item.slot.toUpperCase() : (item.isConsumable ? 'USE' : '');
-            
-            return '<div class="preset-card" data-item-id="' + item.id + '">' +
-                '<div class="preset-card-header">' +
-                    '<span class="preset-icon">' + (item.icon || '📦') + '</span>' +
-                    '<span class="preset-name">' + item.name + '</span>' +
-                    '<span class="preset-slot">' + slotLabel + '</span>' +
-                '</div>' +
-                '<div class="preset-mods">' + mods + '</div>' +
-                '</div>';
-        }
-        
-        function renderCategory(title, items) {
-            if (items.length === 0) return '';
-            return '<div class="preset-category-section">' +
-                '<h3 class="preset-category-title">' + title + '</h3>' +
-                '<div class="preset-cards">' + items.map(renderItemCard).join('') + '</div>' +
-                '</div>';
-        }
-        
-        var content = renderCategory('CLOTHES', clothes) +
-                      renderCategory('TOOLS', tools) +
-                      renderCategory('CONSUMABLES', consumables);
-        
-        // Bottom sheet style - anchored to bottom, slides up
-        modal.innerHTML = 
-            '<div class="interfacing-bottom-sheet" style="position:absolute;bottom:0;left:0;right:0;max-height:75vh;background:#1a1a1f;border-top:2px solid #bfa127;border-radius:12px 12px 0 0;display:flex;flex-direction:column;">' +
-                '<div class="interfacing-sheet-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px;background:#252530;border-radius:12px 12px 0 0;border-bottom:1px solid #3a3a4a;flex-shrink:0;">' +
-                    '<span style="color:#bfa127;font-weight:bold;font-size:16px;">📦 BROWSE ITEMS</span>' +
-                    '<button class="interfacing-modal-close" style="background:#a54;border:none;color:#fff;font-size:14px;cursor:pointer;padding:8px 16px;border-radius:4px;font-weight:bold;">✕ Close</button>' +
-                '</div>' +
-                '<div class="interfacing-sheet-body" style="padding:12px;overflow-y:auto;flex:1;">' + content + '</div>' +
-                '<div id="preset-detail-panel" style="display:none;padding:12px;background:#252530;border-top:1px solid #3a3a4a;max-height:40vh;overflow-y:auto;flex-shrink:0;"></div>' +
-            '</div>';
-        
-        // Close button
-        modal.querySelector('.interfacing-modal-close').addEventListener('click', function() { 
-            modal.remove(); 
-        });
-        
-        // Click on dark overlay to close
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) modal.remove();
-        });
-        
-        // ESC to close
-        function escHandler(e) {
-            if (e.key === 'Escape') {
-                modal.remove();
-                document.removeEventListener('keydown', escHandler);
-            }
-        }
-        document.addEventListener('keydown', escHandler);
-        
-        // Item card clicks - show detail
-        modal.querySelectorAll('.preset-card').forEach(function(card) {
-            card.addEventListener('click', function() {
-                var itemId = card.dataset.itemId;
-                var wasSelected = card.classList.contains('selected');
-                
-                // Clear all selections
-                modal.querySelectorAll('.preset-card').forEach(function(c) { c.classList.remove('selected'); });
-                
-                // Toggle - if already selected, close detail panel
-                if (wasSelected) {
-                    var detailPanel = modal.querySelector('#preset-detail-panel');
-                    if (detailPanel) detailPanel.style.display = 'none';
-                } else {
-                    card.classList.add('selected');
-                    showItemDetail(itemId, modal);
-                }
-            });
-        });
-        
-        document.body.appendChild(modal);
-    }
-    
-    function showItemDetail(itemId, modal) {
-        var item = PRESET_ITEMS[itemId];
-        if (!item) return;
-        
-        var detailPanel = modal.querySelector('#preset-detail-panel');
-        if (!detailPanel) return;
-        
-        // Find the primary skill (highest positive modifier)
-        var primarySkill = null;
-        var highestMod = 0;
-        Object.entries(item.modifiers || {}).forEach(function(entry) {
-            if (entry[1] > highestMod) {
-                highestMod = entry[1];
-                primarySkill = entry[0];
-            }
-        });
-        
-        // Build voice descriptions
-        var voiceHtml = '';
-        if (item.voiceDescriptions) {
-            Object.entries(item.voiceDescriptions).forEach(function(entry) {
-                var skillId = entry[0];
-                var voice = entry[1];
-                var skillName = formatSkillName(skillId).toUpperCase();
-                var checkResult = voice.success ? 'Success' : 'Failure';
-                var checkColor = voice.success ? '#4a9' : '#a54';
-                
-                voiceHtml += '<div class="voice-block" style="margin-top:12px;padding:10px;background:#1a1a1f;border-radius:4px;border-left:3px solid ' + checkColor + ';">';
-                voiceHtml += '<div style="font-size:10px;margin-bottom:6px;">';
-                voiceHtml += '<span style="color:' + checkColor + ';">' + skillName + '</span>';
-                voiceHtml += ' <span style="color:#666;">[' + voice.check + ': ' + checkResult + ']</span>';
-                voiceHtml += '</div>';
-                voiceHtml += '<div style="color:#ccc;font-size:12px;font-style:italic;line-height:1.4;">' + voice.text + '</div>';
-                
-                if (voice.comment) {
-                    voiceHtml += '<div style="color:#888;font-size:11px;margin-top:8px;padding-top:8px;border-top:1px dashed #333;">' + voice.comment + '</div>';
-                }
-                voiceHtml += '</div>';
-            });
-        }
-        
-        // Build modifiers list
-        var modsHtml = Object.entries(item.modifiers || {}).map(function(entry) {
-            var color = entry[1] > 0 ? '#4a9' : '#a54';
-            return '<span style="color:' + color + ';margin-right:8px;">' + formatModifier(entry[1]) + ' ' + formatSkillName(entry[0]) + '</span>';
-        }).join('');
-        
-        // Action button
-        var actionText = item.isConsumable ? 'Use' : 'Equip';
-        var actionColor = item.isConsumable ? '#6449af' : '#bfa127';
-        
-        detailPanel.innerHTML = 
-            '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">' +
-                '<div style="display:flex;align-items:flex-start;gap:12px;flex:1;">' +
-                    '<div style="font-size:32px;">' + (item.icon || '📦') + '</div>' +
-                    '<div style="flex:1;">' +
-                        '<div style="font-size:16px;font-weight:bold;color:#e8e8e8;">' + item.name + '</div>' +
-                        '<div style="font-size:10px;color:#666;text-transform:uppercase;margin-top:2px;">' + (item.slot || item.category) + '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<button class="detail-close-btn" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;padding:4px 8px;">✕</button>' +
-            '</div>' +
-            '<div style="color:#a0a0a0;font-size:12px;line-height:1.5;margin-bottom:12px;">' + (item.description || '') + '</div>' +
-            '<div style="margin-bottom:12px;">' + modsHtml + '</div>' +
-            voiceHtml +
-            '<button class="preset-action-btn" data-item-id="' + itemId + '" style="width:100%;margin-top:12px;padding:10px;background:' + actionColor + ';border:none;color:#000;font-weight:bold;border-radius:4px;cursor:pointer;">' + actionText + '</button>';
-        
-        // Bind close button for detail panel
-        detailPanel.querySelector('.detail-close-btn').addEventListener('click', function() {
-            detailPanel.style.display = 'none';
-            modal.querySelectorAll('.preset-card').forEach(function(c) { c.classList.remove('selected'); });
-        });
-        
-        // Bind action button
-        detailPanel.querySelector('.preset-action-btn').addEventListener('click', function(e) {
-            var id = e.target.dataset.itemId;
-            var itm = PRESET_ITEMS[id];
-            if (itm && itm.isConsumable) {
-                useConsumable(id);
-            } else {
-                equipItem(id);
-            }
-            modal.remove();
-            renderCurrentTab();
-            updateVitalsDisplay();
-        });
-        
-        detailPanel.style.display = 'block';
     }
     
     function showPanel() { 
@@ -1352,7 +781,7 @@
     function togglePanel() { isPanelOpen ? hidePanel() : showPanel(); }
     
     // ═══════════════════════════════════════════════════════════════
-    // ST EXTENSION PANEL (like IE does)
+    // ST EXTENSION PANEL
     // ═══════════════════════════════════════════════════════════════
     
     function addExtensionPanel() {
@@ -1379,8 +808,6 @@
                         <button id="interfacing-open-panel-btn" class="menu_button" style="width: 100%;">
                             Open Panel
                         </button>
-                        <hr style="margin: 10px 0; border-color: #444;">
-                        <small style="color: #666;">FAB appears at bottom-right of screen.</small>
                     </div>
                 </div>
             </div>
@@ -1388,7 +815,6 @@
         
         container.insertAdjacentHTML('beforeend', settingsHtml);
         
-        // Bind open panel button
         document.getElementById('interfacing-open-panel-btn')?.addEventListener('click', function() {
             showPanel();
         });
@@ -1397,32 +823,24 @@
     }
     
     // ═══════════════════════════════════════════════════════════════
-    // INIT - Matching IE's pattern exactly
+    // INIT
     // ═══════════════════════════════════════════════════════════════
     
     async function init() {
         console.log('[Interfacing] Initializing...');
         
         try {
-            // Load CSS explicitly like IE does
             const link = document.createElement('link');
             link.rel = 'stylesheet';
             link.href = `${extensionFolderPath}/styles.css`;
             document.head.appendChild(link);
             console.log('[Interfacing] CSS loaded');
             
-            // Load saved settings
             loadSettings();
-            
-            // Create extension settings in ST's extension panel (like IE)
             addExtensionPanel();
-            
-            // Create UI elements
             createFAB();
             createVitalsWidget();
             createPanel();
-            
-            // Try to connect to Inland Empire
             connectToInlandEmpire();
             
             console.log('[Interfacing] Ready!');
@@ -1438,7 +856,6 @@
         }
     }
     
-    // Use jQuery ready like IE does
     jQuery(async () => {
         await init();
     });
