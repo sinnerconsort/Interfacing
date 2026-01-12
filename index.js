@@ -1146,7 +1146,7 @@
         var modal = document.createElement('div');
         modal.id = 'interfacing-presets-modal';
         modal.className = 'interfacing-modal';
-        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:200000;';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:flex-start;justify-content:center;z-index:200000;overflow-y:auto;';
         
         // Group items by category
         var clothes = [];
@@ -1190,13 +1190,13 @@
                       renderCategory('TOOLS', tools) +
                       renderCategory('CONSUMABLES', consumables);
         
-        modal.innerHTML = '<div class="interfacing-modal-content" style="width:90%;max-width:500px;max-height:80vh;background:#1a1a1f;border:1px solid #3a3a4a;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">' +
+        modal.innerHTML = '<div class="interfacing-modal-content" style="width:90%;max-width:500px;max-height:85vh;margin:40px 0;background:#1a1a1f;border:1px solid #3a3a4a;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">' +
             '<div class="interfacing-modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#252530;border-bottom:1px solid #3a3a4a;">' +
                 '<span style="color:#bfa127;font-weight:bold;font-size:14px;">📦 BROWSE ITEMS</span>' +
                 '<button class="interfacing-modal-close" style="background:#3a3a4a;border:1px solid #4a4a5a;color:#e8e8e8;font-size:12px;cursor:pointer;padding:6px 12px;border-radius:4px;font-weight:bold;">✕ Close</button>' +
             '</div>' +
             '<div class="interfacing-modal-body" style="padding:12px;overflow-y:auto;flex:1;">' + content + '</div>' +
-            '<div id="preset-detail-panel" style="display:none;padding:12px;background:#252530;border-top:1px solid #3a3a4a;max-height:50%;overflow-y:auto;"></div>' +
+            '<div id="preset-detail-panel" style="display:none;padding:12px;background:#252530;border-top:1px solid #3a3a4a;max-height:40%;overflow-y:auto;"></div>' +
         '</div>';
         
         // Close button
