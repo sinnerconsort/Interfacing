@@ -378,11 +378,11 @@
         fabElement.innerHTML = '🔧';
         fabElement.title = 'Interfacing';
         
-        // Position at bottom-left, above where IE's icons are
+        // TOP-RIGHT corner - definitely visible
         fabElement.setAttribute('style', 
             'position: fixed; ' +
-            'bottom: 250px; ' +
-            'left: 10px; ' +
+            'top: 60px; ' +
+            'right: 10px; ' +
             'width: 40px; ' +
             'height: 40px; ' +
             'background: #252530; ' +
@@ -393,37 +393,37 @@
             'justify-content: center; ' +
             'font-size: 18px; ' +
             'cursor: pointer; ' +
-            'z-index: 9999; ' +
+            'z-index: 99999; ' +
             'box-shadow: 0 2px 8px rgba(0,0,0,0.5);'
         );
         
         fabElement.addEventListener('click', togglePanel);
         document.body.appendChild(fabElement);
-        console.log('[Interfacing] FAB created');
+        console.log('[Interfacing] FAB created at top-right');
     }
     
     function createVitalsWidget() {
         vitalsWidgetElement = document.createElement('div');
         vitalsWidgetElement.id = 'interfacing-vitals-widget';
         
-        // Position above FAB
+        // Below FAB in top-right
         vitalsWidgetElement.setAttribute('style',
             'position: fixed; ' +
-            'bottom: 300px; ' +
-            'left: 10px; ' +
+            'top: 110px; ' +
+            'right: 10px; ' +
             'width: 130px; ' +
             'background: #1a1a1f; ' +
             'border: 1px solid #3a3a4a; ' +
             'border-radius: 6px; ' +
             'padding: 8px; ' +
-            'z-index: 9998; ' +
+            'z-index: 99998; ' +
             'font-family: Segoe UI, system-ui, sans-serif; ' +
             'box-shadow: 0 2px 8px rgba(0,0,0,0.3);'
         );
         
         updateVitalsDisplay();
         document.body.appendChild(vitalsWidgetElement);
-        console.log('[Interfacing] Vitals widget created');
+        console.log('[Interfacing] Vitals widget created at top-right');
     }
     
     function updateVitalsDisplay() {
