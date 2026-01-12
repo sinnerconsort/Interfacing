@@ -21,15 +21,22 @@
     --if-accent: #bfa127;  /* Motorics yellow - Interfacing's color */
     --if-accent-dim: rgba(191, 161, 39, 0.3);
     
-    --if-health: #ad3d5b;  /* Physique red */
-    --if-morale: #53a4b5;  /* Intellect blue - or could be Psyche purple */
-    --if-morale-alt: #6449af;  /* Psyche purple */
+    --if-health: #c4a35a;  /* DE amber/brown */
+    --if-health-bg: #1a1510;
+    --if-morale: #0d738a;  /* DE teal */
+    --if-morale-bg: #0a1a1d;
     
     --if-positive: #4a9;
     --if-negative: #a54;
     
     --if-panel-width: 340px;
     --if-panel-radius: 8px;
+}
+
+/* Pulse animation for critical vitals */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -113,11 +120,19 @@
 }
 
 .vital-bar.morale {
-    background: var(--if-morale-alt);
+    background: var(--if-morale);
 }
 
 .vital-bar.critical {
     animation: pulse-critical 1s ease-in-out infinite;
+}
+
+.vital-bar-container {
+    background: var(--if-health-bg);
+}
+
+.vital-row:last-child .vital-bar-container {
+    background: var(--if-morale-bg);
 }
 
 @keyframes pulse-critical {
@@ -212,6 +227,7 @@
     color: var(--if-text-secondary);
     cursor: pointer;
     transition: all 0.2s ease;
+    font-size: 18px;  /* Bigger icons */
 }
 
 .interfacing-tab:hover {
@@ -710,4 +726,42 @@
 
 #interfacing-open-panel {
     width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LEDGER TAB
+   ═══════════════════════════════════════════════════════════════ */
+
+.ledger-tab {
+    font-size: 13px;
+}
+
+.ledger-header {
+    font-family: 'Courier New', monospace;
+}
+
+.ledger-task {
+    transition: all 0.2s ease;
+}
+
+.ledger-task:hover {
+    background: #2a2a35 !important;
+}
+
+.ledger-task button:hover {
+    background: #3a6a3a !important;
+}
+
+/* Scrollbar for ledger */
+.ledger-tab::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ledger-tab::-webkit-scrollbar-track {
+    background: var(--if-bg-primary);
+}
+
+.ledger-tab::-webkit-scrollbar-thumb {
+    background: var(--if-border);
+    border-radius: 3px;
 }

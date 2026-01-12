@@ -119,7 +119,14 @@
     
     let IE = null;
     let isIEConnected = false;
-    let extensionSettings = { enabled: true, baseHealth: 3, baseMorale: 3 };
+    let extensionSettings = { 
+        enabled: true, 
+        baseHealth: 3, 
+        baseMorale: 3,
+        fabPosition: null,
+        vitalsPosition: null,
+        ledger: null
+    };
     
     let equipped = { clothes: {}, tools: [], held: [] };
     let consumables = [];
@@ -136,6 +143,16 @@
     let fabElement = null;
     let isPanelOpen = false;
     let currentTab = 'inventory';
+    
+    // Ledger state - tasks/quests journal
+    let ledger = {
+        officerInitials: 'HDB', // Default to Harry Du Bois, can be customized
+        caseNumber: 41,
+        tasks: {
+            active: [],
+            completed: []
+        }
+    };
     
     // ═══════════════════════════════════════════════════════════════
     // INVENTORY
@@ -394,11 +411,27 @@
             'font-size: 18px; ' +
             'cursor: pointer; ' +
             'z-index: 99999; ' +
-            'box-shadow: 0 2px 8px rgba(0,0,0,0.5);'
+            'box-shadow: 0 2px 8px rgba(0,0,0,0.5); ' +
+            'user-select: none;'
         );
         
-        fabElement.addEventListener('click', togglePanel);
+        fabElement.addEventListener('click', function(e) {
+            if (!fabElement.dataset.justDragged) {
+                togglePanel();
+            }
+            fabElement.dataset.justDragged = '';
+        });
+        
+        makeDraggable(fabElement, 'fabPosition');
         document.body.appendChild(fabElement);
+        
+        // Restore saved position
+        if (extensionSettings.fabPosition) {
+            fabElement.style.top = extensionSettings.fabPosition.top + 'px';
+            fabElement.style.right = 'auto';
+            fabElement.style.left = extensionSettings.fabPosition.left + 'px';
+        }
+        
         console.log('[Interfacing] FAB created at top-right');
     }
     
@@ -418,28 +451,169 @@
             'padding: 8px; ' +
             'z-index: 99998; ' +
             'font-family: Segoe UI, system-ui, sans-serif; ' +
-            'box-shadow: 0 2px 8px rgba(0,0,0,0.3);'
+            'box-shadow: 0 2px 8px rgba(0,0,0,0.3); ' +
+            'cursor: move; ' +
+            'user-select: none;'
         );
+        
+        makeDraggable(vitalsWidgetElement, 'vitalsPosition');
+        
+        // Restore saved position
+        if (extensionSettings.vitalsPosition) {
+            vitalsWidgetElement.style.top = extensionSettings.vitalsPosition.top + 'px';
+            vitalsWidgetElement.style.right = 'auto';
+            vitalsWidgetElement.style.left = extensionSettings.vitalsPosition.left + 'px';
+        }
         
         updateVitalsDisplay();
         document.body.appendChild(vitalsWidgetElement);
         console.log('[Interfacing] Vitals widget created at top-right');
     }
     
+    function makeDraggable(element, saveKey) {
+        var isDragging = false;
+        var startX, startY, startLeft, startTop;
+        var hasMoved = false;
+        
+        element.addEventListener('mousedown', startDrag);
+        element.addEventListener('touchstart', startDrag, {passive: false});
+        
+        function startDrag(e) {
+            isDragging = true;
+            hasMoved = false;
+            
+            var touch = e.touches ? e.touches[0] : e;
+            startX = touch.clientX;
+            startY = touch.clientY;
+            
+            var rect = element.getBoundingClientRect();
+            startLeft = rect.left;
+            startTop = rect.top;
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchmove', drag, {passive: false});
+            document.addEventListener('touchend', stopDrag);
+        }
+        
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            var touch = e.touches ? e.touches[0] : e;
+            var dx = touch.clientX - startX;
+            var dy = touch.clientY - startY;
+            
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                hasMoved = true;
+                element.dataset.justDragged = 'true';
+            }
+            
+            var newLeft = startLeft + dx;
+            var newTop = startTop + dy;
+            
+            // Keep in bounds
+            newLeft = Math.max(0, Math.min(window.innerWidth - element.offsetWidth, newLeft));
+            newTop = Math.max(0, Math.min(window.innerHeight - element.offsetHeight, newTop));
+            
+            element.style.left = newLeft + 'px';
+            element.style.top = newTop + 'px';
+            element.style.right = 'auto';
+        }
+        
+        function stopDrag() {
+            if (isDragging && hasMoved && saveKey) {
+                extensionSettings[saveKey] = {
+                    left: parseInt(element.style.left),
+                    top: parseInt(element.style.top)
+                };
+                // Save to ST if available
+                saveSettings();
+            }
+            
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('touchend', stopDrag);
+            
+            // Clear justDragged after a short delay
+            setTimeout(function() {
+                element.dataset.justDragged = '';
+            }, 100);
+        }
+    }
+    
+    function saveSettings() {
+        try {
+            var context = typeof SillyTavern !== 'undefined' ? SillyTavern.getContext() : null;
+            if (context && context.extensionSettings) {
+                // Save ledger to extensionSettings
+                extensionSettings.ledger = ledger;
+                context.extensionSettings.interfacing = extensionSettings;
+                context.saveSettingsDebounced();
+            }
+        } catch(e) {
+            console.log('[Interfacing] Could not save settings:', e);
+        }
+    }
+    
+    function loadSettings() {
+        try {
+            var context = typeof SillyTavern !== 'undefined' ? SillyTavern.getContext() : null;
+            if (context && context.extensionSettings && context.extensionSettings.interfacing) {
+                var saved = context.extensionSettings.interfacing;
+                
+                // Merge saved settings
+                if (saved.fabPosition) extensionSettings.fabPosition = saved.fabPosition;
+                if (saved.vitalsPosition) extensionSettings.vitalsPosition = saved.vitalsPosition;
+                if (saved.baseHealth) extensionSettings.baseHealth = saved.baseHealth;
+                if (saved.baseMorale) extensionSettings.baseMorale = saved.baseMorale;
+                
+                // Load ledger
+                if (saved.ledger) {
+                    ledger = saved.ledger;
+                    // Ensure arrays exist
+                    if (!ledger.tasks) ledger.tasks = { active: [], completed: [] };
+                    if (!ledger.tasks.active) ledger.tasks.active = [];
+                    if (!ledger.tasks.completed) ledger.tasks.completed = [];
+                }
+                
+                console.log('[Interfacing] Settings loaded');
+            }
+        } catch(e) {
+            console.log('[Interfacing] Could not load settings:', e);
+        }
+    }
+    
     function updateVitalsDisplay() {
         if (!vitalsWidgetElement) return;
         var hp = (vitals.health.current / vitals.health.max) * 100;
         var mp = (vitals.morale.current / vitals.morale.max) * 100;
-        var hc = vitals.health.current <= vitals.health.max * 0.25 ? 'critical' : '';
-        var mc = vitals.morale.current <= vitals.morale.max * 0.25 ? 'critical' : '';
+        var hCrit = vitals.health.current <= vitals.health.max * 0.25;
+        var mCrit = vitals.morale.current <= vitals.morale.max * 0.25;
+        
+        // DE colors: Health #110e05 (dark amber), Morale #0d738a (teal)
+        var healthColor = hCrit ? '#ff4444' : '#c4a35a'; // Brighter amber for visibility, red when critical
+        var moraleColor = mCrit ? '#ff4444' : '#0d738a'; // DE teal, red when critical
         
         vitalsWidgetElement.innerHTML = 
-            '<div class="vital-row"><span class="vital-label">HEALTH</span>' +
-            '<div class="vital-bar-container"><div class="vital-bar health ' + hc + '" style="width:' + hp + '%"></div></div>' +
-            '<span class="vital-value">' + vitals.health.current + '/' + vitals.health.max + '</span></div>' +
-            '<div class="vital-row"><span class="vital-label">MORALE</span>' +
-            '<div class="vital-bar-container"><div class="vital-bar morale ' + mc + '" style="width:' + mp + '%"></div></div>' +
-            '<span class="vital-value">' + vitals.morale.current + '/' + vitals.morale.max + '</span></div>';
+            '<div style="margin-bottom:6px;">' +
+                '<div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:2px;">' +
+                    '<span>HEALTH</span><span>' + vitals.health.current + '/' + vitals.health.max + '</span>' +
+                '</div>' +
+                '<div style="background:#1a1510;border-radius:2px;height:8px;overflow:hidden;">' +
+                    '<div style="background:' + healthColor + ';height:100%;width:' + hp + '%;transition:width 0.3s;' + (hCrit ? 'animation:pulse 1s infinite;' : '') + '"></div>' +
+                '</div>' +
+            '</div>' +
+            '<div>' +
+                '<div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:2px;">' +
+                    '<span>MORALE</span><span>' + vitals.morale.current + '/' + vitals.morale.max + '</span>' +
+                '</div>' +
+                '<div style="background:#0a1a1d;border-radius:2px;height:8px;overflow:hidden;">' +
+                    '<div style="background:' + moraleColor + ';height:100%;width:' + mp + '%;transition:width 0.3s;' + (mCrit ? 'animation:pulse 1s infinite;' : '') + '"></div>' +
+                '</div>' +
+            '</div>';
     }
     
     function createPanel() {
@@ -456,8 +630,9 @@
                 '<button class="interfacing-panel-close">×</button>' +
             '</div>' +
             '<div class="interfacing-tabs">' +
-                '<button class="interfacing-tab active" data-tab="inventory">📦 Inventory</button>' +
-                '<button class="interfacing-tab" data-tab="vitals">💔 Vitals</button>' +
+                '<button class="interfacing-tab active" data-tab="inventory">📦</button>' +
+                '<button class="interfacing-tab" data-tab="vitals">💔</button>' +
+                '<button class="interfacing-tab" data-tab="ledger">📒</button>' +
             '</div>' +
             '<div class="interfacing-panel-content"></div>';
         
@@ -487,6 +662,9 @@
         } else if (currentTab === 'vitals') {
             content.innerHTML = renderVitalsTab();
             attachVitalsListeners(content);
+        } else if (currentTab === 'ledger') {
+            content.innerHTML = renderLedgerTab();
+            attachLedgerListeners(content);
         }
     }
     
@@ -567,21 +745,133 @@
     function renderVitalsTab() {
         var hp = (vitals.health.current / vitals.health.max) * 100;
         var mp = (vitals.morale.current / vitals.morale.max) * 100;
+        // Use DE colors
+        var healthColor = '#c4a35a';
+        var moraleColor = '#0d738a';
         return '<div class="vitals-tab">' +
             '<section class="vitals-section"><h3>// HEALTH</h3>' +
-            '<div class="vital-display health"><div class="vital-bar-large">' +
-            '<div class="vital-fill" style="width:' + hp + '%"></div></div>' +
+            '<div class="vital-display health"><div class="vital-bar-large" style="background:#1a1510;">' +
+            '<div class="vital-fill" style="width:' + hp + '%;background:' + healthColor + ';"></div></div>' +
             '<div class="vital-numbers">' + vitals.health.current + ' / ' + vitals.health.max + '</div></div>' +
             '<p class="vital-description">Physical damage. When this reaches zero, you die.</p>' +
             '<div class="vital-controls"><button data-action="damage-health">−1</button>' +
             '<button data-action="heal-health">+1</button></div></section>' +
             '<section class="vitals-section"><h3>// MORALE</h3>' +
-            '<div class="vital-display morale"><div class="vital-bar-large">' +
-            '<div class="vital-fill" style="width:' + mp + '%"></div></div>' +
+            '<div class="vital-display morale"><div class="vital-bar-large" style="background:#0a1a1d;">' +
+            '<div class="vital-fill" style="width:' + mp + '%;background:' + moraleColor + ';"></div></div>' +
             '<div class="vital-numbers">' + vitals.morale.current + ' / ' + vitals.morale.max + '</div></div>' +
             '<p class="vital-description">Psychological damage. When this reaches zero, you give up.</p>' +
             '<div class="vital-controls"><button data-action="damage-morale">−1</button>' +
             '<button data-action="heal-morale">+1</button></div></section></div>';
+    }
+    
+    function renderLedgerTab() {
+        var html = '<div class="ledger-tab" style="padding:12px;">';
+        
+        // Case header
+        html += '<div class="ledger-header" style="margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #3a3a4a;">';
+        html += '<div style="font-size:10px;color:#666;text-transform:uppercase;">Case File</div>';
+        html += '<div style="font-size:14px;color:#c4a35a;font-weight:bold;">' + ledger.officerInitials + ledger.caseNumber.toString().padStart(3, '0') + '</div>';
+        html += '</div>';
+        
+        // Active tasks
+        html += '<section class="ledger-section">';
+        html += '<h3 style="font-size:11px;color:#888;margin:0 0 8px 0;text-transform:uppercase;">// Active Tasks</h3>';
+        
+        if (ledger.tasks.active.length === 0) {
+            html += '<div style="color:#555;font-style:italic;font-size:12px;">No active tasks</div>';
+        } else {
+            ledger.tasks.active.forEach(function(task, idx) {
+                html += '<div class="ledger-task" style="background:#252530;border-radius:4px;padding:8px;margin-bottom:6px;border-left:3px solid #c4a35a;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:start;">';
+                html += '<span style="color:#ddd;font-size:12px;">' + task.text + '</span>';
+                html += '<button data-action="complete-task" data-idx="' + idx + '" style="background:#2a4a2a;border:none;color:#6a6;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:10px;">✓</button>';
+                html += '</div>';
+                if (task.notes) {
+                    html += '<div style="color:#888;font-size:10px;margin-top:4px;font-style:italic;">' + task.notes + '</div>';
+                }
+                html += '</div>';
+            });
+        }
+        html += '</section>';
+        
+        // Completed tasks (collapsed by default if many)
+        html += '<section class="ledger-section" style="margin-top:12px;">';
+        html += '<h3 style="font-size:11px;color:#666;margin:0 0 8px 0;text-transform:uppercase;">// Completed (' + ledger.tasks.completed.length + ')</h3>';
+        
+        if (ledger.tasks.completed.length > 0) {
+            var showCount = Math.min(5, ledger.tasks.completed.length);
+            ledger.tasks.completed.slice(-showCount).reverse().forEach(function(task) {
+                html += '<div style="color:#555;font-size:11px;text-decoration:line-through;margin-bottom:4px;">' + task.text + '</div>';
+            });
+            if (ledger.tasks.completed.length > 5) {
+                html += '<div style="color:#444;font-size:10px;">...and ' + (ledger.tasks.completed.length - 5) + ' more</div>';
+            }
+        }
+        html += '</section>';
+        
+        // Add task input
+        html += '<div class="ledger-add" style="margin-top:12px;padding-top:12px;border-top:1px solid #3a3a4a;">';
+        html += '<input type="text" id="ledger-new-task" placeholder="New task..." style="width:100%;background:#252530;border:1px solid #3a3a4a;border-radius:4px;padding:8px;color:#ddd;font-size:12px;box-sizing:border-box;">';
+        html += '<button data-action="add-task" style="width:100%;margin-top:6px;background:#3a3a4a;border:none;color:#aaa;padding:8px;border-radius:4px;cursor:pointer;font-size:11px;">+ Add Task</button>';
+        html += '</div>';
+        
+        // Officer settings
+        html += '<div class="ledger-settings" style="margin-top:12px;padding-top:12px;border-top:1px solid #3a3a4a;">';
+        html += '<div style="font-size:10px;color:#555;margin-bottom:6px;">Officer Initials</div>';
+        html += '<input type="text" id="ledger-initials" value="' + ledger.officerInitials + '" maxlength="4" style="width:60px;background:#252530;border:1px solid #3a3a4a;border-radius:4px;padding:4px 8px;color:#c4a35a;font-size:12px;text-transform:uppercase;">';
+        html += '</div>';
+        
+        html += '</div>';
+        return html;
+    }
+    
+    function attachLedgerListeners(content) {
+        // Add task
+        var addBtn = content.querySelector('[data-action="add-task"]');
+        var input = content.querySelector('#ledger-new-task');
+        
+        if (addBtn && input) {
+            addBtn.addEventListener('click', function() {
+                var text = input.value.trim();
+                if (text) {
+                    ledger.tasks.active.push({ text: text, addedAt: Date.now() });
+                    input.value = '';
+                    saveSettings();
+                    renderCurrentTab();
+                }
+            });
+            
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addBtn.click();
+                }
+            });
+        }
+        
+        // Complete task
+        content.querySelectorAll('[data-action="complete-task"]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var idx = parseInt(btn.dataset.idx);
+                var task = ledger.tasks.active.splice(idx, 1)[0];
+                if (task) {
+                    task.completedAt = Date.now();
+                    ledger.tasks.completed.push(task);
+                    saveSettings();
+                    renderCurrentTab();
+                }
+            });
+        });
+        
+        // Update initials
+        var initialsInput = content.querySelector('#ledger-initials');
+        if (initialsInput) {
+            initialsInput.addEventListener('change', function() {
+                ledger.officerInitials = initialsInput.value.toUpperCase().substring(0, 4) || 'HDB';
+                saveSettings();
+                renderCurrentTab();
+            });
+        }
     }
     
     function attachInventoryListeners(content) {
@@ -712,6 +1002,9 @@
             link.href = `${extensionFolderPath}/styles.css`;
             document.head.appendChild(link);
             console.log('[Interfacing] CSS loaded');
+            
+            // Load saved settings
+            loadSettings();
             
             // Create extension settings in ST's extension panel (like IE)
             addExtensionPanel();
