@@ -16,10 +16,11 @@
 5. [Inland Empire Integration](#5-inland-empire-integration)
 6. [UI Specification](#6-ui-specification)
 7. [Module Specifications](#7-module-specifications)
-8. [Auto-Detection System](#8-auto-detection-system)
-9. [Persistence Strategy](#9-persistence-strategy)
-10. [Implementation Checklist](#10-implementation-checklist)
-11. [Resume Instructions](#11-resume-instructions)
+8. [Suggestion System](#8-suggestion-system)
+9. [Auto-Detection System](#9-auto-detection-system)
+10. [Persistence Strategy](#10-persistence-strategy)
+11. [Implementation Checklist](#11-implementation-checklist)
+12. [Resume Instructions](#12-resume-instructions)
 
 ---
 
@@ -178,6 +179,11 @@ Interfacing/
     │   ├── ledger.js       # Tasks and memories
     │   └── auto-detect.js  # Narrative parsing
     │
+    ├── suggestion/
+    │   ├── suggestion-panel.js   # Floating panel UI
+    │   ├── suggestion-state.js   # Panel state management
+    │   └── suggestion-gen.js     # Prompt building & parsing
+    │
     └── ui/
         ├── panel.js        # Sidebar panel creation
         ├── tabs.js         # Tab content rendering
@@ -219,6 +225,11 @@ index.js
     │       ├── status.js
     │       ├── inventory.js
     │       └── ledger.js
+    │
+    ├── suggestion/*
+    │       ├── state.js
+    │       ├── ie-bridge.js (for skill data, rolls, generation)
+    │       └── status.js (for current conditions)
     │
     └── ui/*
             ├── state.js
@@ -1846,9 +1857,325 @@ Return format:
 
 ---
 
-## 8. Auto-Detection System
+## 8. Suggestion System
 
 ### 8.1 Overview
+
+The **Suggestion System** is a creative prompt tool that generates skill-flavored action suggestions based on the current narrative context. It presents players with options their character's skills might suggest, capturing Disco Elysium's signature internal dialogue where skills argue, suggest, and tempt.
+
+**Key Principles:**
+- **Prompt tool, not automation** - Suggestions inspire the player's message, they don't send automatically
+- **Skill-voiced suggestions** - Each option channels a specific skill's personality
+- **Roll-gated actions** - Selecting an suggestion triggers a skill check via IE
+- **Tone variety** - Options range from practical to chaotic/unhinged
+
+### 8.2 UI Design
+
+The Suggestion Panel is a **separate floating window** (not inside the main Interfacing sidebar):
+
+```
+┌─ SUGGESTIONS ─────────────────────────── ✕ ─┐
+│  ○ Auto   ● Manual           [Refresh]   │
+├──────────────────────────────────────────┤
+│                                          │
+│  ┌────────────────────────────────────┐  │
+│  │ [Authority 12]                     │  │
+│  │ "You're under arrest." Assert      │  │
+│  │ dominance. It's what cops do.      │  │
+│  └────────────────────────────────────┘  │
+│                                          │
+│  ┌────────────────────────────────────┐  │
+│  │ [Empathy 8]                        │  │
+│  │ She's scared. Underneath the       │  │
+│  │ bravado, she's terrified. Notice.  │  │
+│  └────────────────────────────────────┘  │
+│                                          │
+│  ┌────────────────────────────────────┐  │
+│  │ [Electrochemistry 10]              │  │
+│  │ Is she high? Check her pupils.     │  │
+│  │ Takes one to know one, detective.  │  │
+│  └────────────────────────────────────┘  │
+│                                          │
+│  ┌────────────────────────────────────┐  │
+│  │ [Drama 14]                         │  │
+│  │ LIE. You're not a cop at all.      │  │
+│  │ You're a health inspector. She'll  │  │
+│  │ never see it coming.               │  │
+│  └────────────────────────────────────┘  │
+│                                          │
+├──────────────────────────────────────────┤
+│  I want to...                            │
+│  ┌────────────────────────────────────┐  │
+│  │ intimidate him into talking        │  │
+│  └────────────────────────────────────┘  │
+│                    [Generate Options]    │
+└──────────────────────────────────────────┘
+```
+
+**UI Elements:**
+
+| Element | Purpose |
+|---------|---------|
+| Mode toggle | Auto (regenerate after messages) / Manual (button only) |
+| Refresh button | Manually regenerate suggestions |
+| Suggestion cards | Skill-tagged suggestions, clickable |
+| Intent input | "I want to..." box for directed generation |
+| Close button | Collapse/hide the panel |
+
+**Panel Toggle Button:**
+- Small floating button (separate from Interfacing FAB)
+- Icon: 💭 or 🎲 or custom brain/thought icon
+- Position: Configurable, default near chat input
+- Badge shows number of available suggestions (optional)
+
+### 8.3 User Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     SUGGESTION FLOW                            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. TRIGGER                                                 │
+│     ├─ Auto mode: New message received                      │
+│     └─ Manual: User clicks Refresh / opens panel            │
+│                                                             │
+│  2. CONTEXT GATHERING                                       │
+│     ├─ Last N messages from chat                            │
+│     ├─ Current character/scenario info                      │
+│     ├─ Player's skill levels (from IE)                      │
+│     └─ Active status effects (from IE)                      │
+│                                                             │
+│  3. GENERATION                                              │
+│     ├─ Build prompt with context + skill voices             │
+│     ├─ Request 3-5 options via IE's API                     │
+│     └─ Parse response into suggestion cards                    │
+│                                                             │
+│  4. DISPLAY                                                 │
+│     └─ Show suggestion cards in panel                          │
+│                                                             │
+│  5. SELECTION                                               │
+│     ├─ User taps an suggestion card                            │
+│     ├─ IE rolls skill check (DC from suggestion)            │
+│     └─ Result generated based on success/failure            │
+│                                                             │
+│  6. OUTPUT                                                  │
+│     ├─ Result text shown in panel or toast                  │
+│     ├─ Copied to clipboard OR placed in scratch area        │
+│     └─ User incorporates into their message (or doesn't)    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 8.4 Data Structures
+
+```javascript
+// Single suggestion option
+const Suggestion = {
+    id: string,              // Unique ID
+    skill: string,           // Skill ID (authority, empathy, etc.)
+    dc: number,              // Difficulty class for the check
+    difficulty: string,      // Human readable (Trivial/Easy/Medium/Challenging/Formidable/Legendary/Impossible)
+    shortText: string,       // Brief action description
+    voiceText: string,       // The skill's pitch in its personality
+    tags: string[]           // Optional: ['aggressive', 'deceptive', 'kind', 'unhinged']
+};
+
+// Panel state
+const SuggestionState = {
+    isOpen: boolean,
+    mode: 'auto' | 'manual',
+    suggestions: Suggestion[],
+    isGenerating: boolean,
+    lastContext: string,     // Hash of context to avoid regenerating
+    pendingRoll: {           // When user selects an suggestion
+        suggestion: Suggestion,
+        result: null | {
+            success: boolean,
+            roll: number,
+            total: number,
+            critical: boolean,
+            resultText: string
+        }
+    } | null
+};
+
+// Settings (stored in main Interfacing settings)
+const SuggestionSettings = {
+    enabled: true,
+    mode: 'manual',          // 'auto' | 'manual'
+    suggestionCount: 4,         // 3-5
+    chaosLevel: 0.5,         // 0 (practical) to 1 (unhinged)
+    contextMessages: 5,      // How many messages to include
+    showInPanel: false,      // Show in Interfacing panel vs floating
+    autoCloseOnSelect: true, // Close panel after selecting
+    copyToClipboard: true    // Auto-copy result text
+};
+```
+
+### 8.5 IE Integration Requirements
+
+The Suggestion System requires these from Inland Empire:
+
+```javascript
+// ═══════════════════════════════════════════════════════════════
+// REQUIRED IE EXPORTS
+// ═══════════════════════════════════════════════════════════════
+
+// Already exists in IE
+IE.getSkillLevel(skillId) → number
+IE.getEffectiveSkillLevel(skillId) → number
+IE.rollCheck(skillId, dc) → { success, roll, total, critical }
+IE.generate(prompt, options) → string
+
+// May need to be added to IE
+IE.getSkillVoice(skillId) → {
+    name: string,
+    personality: string,      // Brief description
+    speakingStyle: string,    // How it talks
+    concerns: string[],       // What it cares about
+    quirks: string[]          // Distinctive traits
+}
+
+IE.getActiveStatuses() → [{
+    id: string,
+    name: string,
+    affects: string[],        // Which skills are affected
+    modifier: number
+}]
+```
+
+### 8.6 Generation Prompt Template
+
+```javascript
+const buildSuggestionPrompt = (context) => `
+You are generating skill suggestions for a Disco Elysium-style RPG interface.
+
+CURRENT CONTEXT:
+${context.recentMessages}
+
+PLAYER STATUS:
+- Health: ${context.health.current}/${context.health.max}
+- Morale: ${context.morale.current}/${context.morale.max}
+- Active conditions: ${context.conditions.map(c => c.name).join(', ') || 'None'}
+
+RELEVANT SKILLS (player's current levels):
+${context.topSkills.map(s => `- ${s.name}: ${s.level} (${s.description})`).join('\n')}
+
+Generate ${context.count} suggestion suggestions. Each should:
+1. Be voiced by a specific skill with its distinct personality
+2. Suggest an action the player could take
+3. Include an appropriate difficulty (Trivial 6 / Easy 8 / Medium 10 / Challenging 12 / Formidable 14 / Legendary 16 / Impossible 18+)
+4. Range from practical (1-2 options) to unhinged/chaotic (1-2 options)
+
+FORMAT (JSON array):
+[
+  {
+    "skill": "authority",
+    "dc": 12,
+    "difficulty": "Challenging",
+    "shortText": "Assert dominance",
+    "voiceText": "You're a COP. Make her FEEL it. Show her what the 41st means."
+  }
+]
+
+Return ONLY the JSON array, no other text.
+`;
+```
+
+### 8.7 Difficulty Mapping
+
+| Difficulty | DC | When to use |
+|------------|-----|-------------|
+| Trivial | 6 | Almost automatic for competent skill |
+| Easy | 8 | Minor challenge |
+| Medium | 10 | Standard difficulty |
+| Challenging | 12 | Requires effort |
+| Formidable | 14 | Serious challenge |
+| Legendary | 16 | Exceptional feat |
+| Impossible | 18+ | Near-miraculous |
+
+### 8.8 Result Generation
+
+When a player selects an suggestion and the roll completes:
+
+```javascript
+const buildResultPrompt = (suggestion, rollResult, context) => `
+Generate the result of this action attempt.
+
+ACTION: ${suggestion.shortText}
+SKILL: ${suggestion.skill}
+ROLL: ${rollResult.roll} + ${rollResult.total - rollResult.roll} = ${rollResult.total} vs DC ${suggestion.dc}
+RESULT: ${rollResult.success ? 'SUCCESS' : 'FAILURE'}${rollResult.critical ? ' (CRITICAL)' : ''}
+
+CONTEXT:
+${context.recentMessages}
+
+Write a brief (2-3 sentences) description of how the player attempts this action.
+- On success: The action works as intended
+- On failure: The attempt backfires or fails awkwardly  
+- On critical success: Exceptional, impressive result
+- On critical failure: Spectacular disaster
+
+Write in second person ("You..."). Match Disco Elysium's literary style.
+Return ONLY the result text.
+`;
+```
+
+### 8.9 Module Structure
+
+```
+src/
+└── suggestion/
+    ├── suggestion-panel.js    # UI component
+    ├── suggestion-state.js    # Panel state management  
+    ├── suggestion-gen.js      # Prompt building & parsing
+    └── suggestion-styles.css  # Panel-specific styles
+```
+
+### 8.10 Integration Points
+
+**With Interfacing main panel:**
+- Settings live in Interfacing settings tab
+- Can optionally show suggestions as a tab instead of floating panel
+
+**With Inland Empire:**
+- Pulls skill levels and voices
+- Uses IE's roll mechanism
+- Uses IE's generation API
+- Reads active status effects
+
+**With SillyTavern:**
+- Reads chat messages for context
+- Panel positioned relative to chat interface
+
+### 8.11 Settings UI (in Interfacing Panel)
+
+```
+┌─ Suggestion System ──────────────────────────┐
+│                                           │
+│  [✓] Enable Suggestions                      │
+│                                           │
+│  Mode: ○ Auto  ● Manual                   │
+│                                           │
+│  Suggestions: [4 ▼]  (3-5)                │
+│                                           │
+│  Chaos Level:                             │
+│  Practical ├────●────┤ Unhinged           │
+│                                           │
+│  Context depth: [5 ▼] messages            │
+│                                           │
+│  [✓] Copy result to clipboard             │
+│  [ ] Auto-close after selection           │
+│  [ ] Show as tab instead of floating      │
+│                                           │
+└───────────────────────────────────────────┘
+```
+
+---
+
+## 9. Auto-Detection System
+
+### 9.1 Overview
 
 Auto-detection is an **optional feature** that parses incoming messages for:
 - Inventory changes (picking up/dropping items)
@@ -1856,7 +2183,7 @@ Auto-detection is an **optional feature** that parses incoming messages for:
 - Notable events (for the memory log)
 - New characters encountered
 
-### 8.2 Detection Modes
+### 9.2 Detection Modes
 
 1. **Regex-based (fast, lower accuracy)**
    - Pattern matching for common phrases
@@ -1868,7 +2195,7 @@ Auto-detection is an **optional feature** that parses incoming messages for:
    - Better understanding of context
    - Can generate item descriptions
 
-### 8.3 Confirmation Flow
+### 9.3 Confirmation Flow
 
 ```
 Message received
@@ -1888,7 +2215,7 @@ Changes detected?
               └─ User dismisses → Ignore
 ```
 
-### 8.4 Settings
+### 9.4 Settings
 
 ```javascript
 autoDetectEnabled: true,      // Master toggle
@@ -1901,9 +2228,9 @@ confidenceThreshold: 0.7      // Minimum confidence to auto-apply
 
 ---
 
-## 9. Persistence Strategy
+## 10. Persistence Strategy
 
-### 9.1 What Goes Where
+### 10.1 What Goes Where
 
 | Data | Storage Location | When Saved |
 |------|------------------|------------|
@@ -1913,7 +2240,7 @@ confidenceThreshold: 0.7      // Minimum confidence to auto-apply
 | Ledger | `chat_metadata.Interfacing` | On change |
 | FAB position | `extension_settings.Interfacing` | On drag end |
 
-### 9.2 Save/Load Triggers
+### 10.2 Save/Load Triggers
 
 **Save:**
 - Any state change (debounced, 500ms)
@@ -1926,7 +2253,7 @@ confidenceThreshold: 0.7      // Minimum confidence to auto-apply
 - Chat change (`eventSource.on(event_types.CHAT_CHANGED)`)
 - Manual refresh
 
-### 9.3 Data Migration
+### 10.3 Data Migration
 
 For future versions, include a version number in saved data:
 
@@ -1951,18 +2278,18 @@ function migrate(savedData) {
 
 ---
 
-## 10. Implementation Checklist
+## 11. Implementation Checklist
 
-### Phase 1: Core Foundation
-- [ ] `config.js` - Constants and defaults
-- [ ] `state.js` - State management
-- [ ] `persistence.js` - Save/load functions
-- [ ] `ie-bridge.js` - IE connection
+### Phase 1: Core Foundation ✅
+- [x] `config.js` - Constants and defaults
+- [x] `state.js` - State management
+- [x] `persistence.js` - Save/load functions
+- [x] `ie-bridge.js` - IE connection
 
-### Phase 2: Systems
-- [ ] `status.js` - Vitals and conditions
-- [ ] `inventory.js` - Equipment and items
-- [ ] `ledger.js` - Tasks and memories
+### Phase 2: Systems ✅
+- [x] `status.js` - Vitals and conditions
+- [x] `inventory.js` - Equipment and items
+- [x] `ledger.js` - Tasks and memories
 
 ### Phase 3: UI
 - [ ] `styles.css` - Complete styling
@@ -1970,24 +2297,30 @@ function migrate(savedData) {
 - [ ] `fab.js` - Floating action button
 - [ ] `tabs.js` - Tab content rendering
 
-### Phase 4: Entry Point
-- [ ] `index.js` - Initialization
-- [ ] `manifest.json` - Extension manifest
+### Phase 4: Entry Point (Partial)
+- [x] `index.js` - Initialization (basic, needs UI hooks)
+- [x] `manifest.json` - Extension manifest
 
 ### Phase 5: Polish
 - [ ] `modals.js` - Add/edit dialogs
 - [ ] `auto-detect.js` - Narrative parsing
 - [ ] Testing and bug fixes
 
-### Phase 6: Advanced Features
+### Phase 6: Suggestion System
+- [ ] `suggestion-state.js` - Panel state management
+- [ ] `suggestion-panel.js` - Floating panel UI
+- [ ] `suggestion-gen.js` - Prompt building & parsing
+- [ ] IE skill voice integration
+- [ ] Roll integration and result generation
+
+### Phase 7: Advanced Features
 - [ ] LLM-assisted item descriptions
 - [ ] LLM-assisted auto-detection
 - [ ] Thought Cabinet integration
-- [ ] Choice Suggestions integration
 
 ---
 
-## 11. Resume Instructions
+## 12. Resume Instructions
 
 ### For New Chat Sessions
 
@@ -1996,32 +2329,61 @@ function migrate(savedData) {
 3. **Upload the current version of that module (if exists)**
 
 Example prompt:
-> "I'm building Interfacing. Here's the SPEC.md. I'm currently working on `inventory.js` - here's what I have so far. Next I need to implement the storage location functions."
+> "I'm building Interfacing for SillyTavern. Here's SPEC.md. The core and systems modules are done. I need to build the UI layer starting with panel.js."
+
+### Current Progress (as of 2025-01-12)
+
+**COMPLETE:**
+- ✅ `config.js` - Constants and defaults
+- ✅ `state.js` - Central state management
+- ✅ `persistence.js` - Save/load to SillyTavern
+- ✅ `ie-bridge.js` - Inland Empire integration
+- ✅ `status.js` - Vitals and conditions
+- ✅ `inventory.js` - Equipment and items  
+- ✅ `ledger.js` - Tasks and memories
+- ✅ `index.js` - Entry point (basic, needs UI hooks)
+- ✅ `manifest.json` - Extension manifest
+
+**NEXT UP (UI Layer):**
+- 🔲 `styles.css` - Complete styling
+- 🔲 `fab.js` - Floating action button
+- 🔲 `panel.js` - Sidebar panel
+- 🔲 `tabs.js` - Tab content rendering
+- 🔲 `modals.js` - Add/edit dialogs
+
+**FUTURE (Suggestion System):**
+- 🔲 `suggestion-state.js` - Panel state management
+- 🔲 `suggestion-panel.js` - Floating panel UI
+- 🔲 `suggestion-gen.js` - Prompt building & parsing
 
 ### Module Build Order
 
 Build in this order to minimize dependency issues:
 
-1. `config.js` (no deps)
-2. `state.js` (depends on config)
-3. `persistence.js` (depends on state)
-4. `ie-bridge.js` (depends on state)
-5. `status.js` (depends on state, ie-bridge)
-6. `inventory.js` (depends on state, ie-bridge)
-7. `ledger.js` (depends on state)
+1. `config.js` (no deps) ✅
+2. `state.js` (depends on config) ✅
+3. `persistence.js` (depends on state) ✅
+4. `ie-bridge.js` (depends on state) ✅
+5. `status.js` (depends on state, ie-bridge) ✅
+6. `inventory.js` (depends on state, ie-bridge) ✅
+7. `ledger.js` (depends on state) ✅
 8. `styles.css` (no deps)
 9. `fab.js` (depends on state)
 10. `panel.js` (depends on state, fab)
 11. `tabs.js` (depends on state, status, inventory, ledger)
-12. `index.js` (depends on everything)
-13. `auto-detect.js` (depends on ie-bridge, systems)
-14. `modals.js` (depends on ui, systems)
+12. `index.js` - wire up UI (depends on everything)
+13. `suggestion-state.js` (depends on state)
+14. `suggestion-gen.js` (depends on ie-bridge, status)
+15. `suggestion-panel.js` (depends on suggestion-state, suggestion-gen)
+16. `auto-detect.js` (depends on ie-bridge, systems)
+17. `modals.js` (depends on ui, systems)
 
 ### Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 3.0.0-dev | 2025-01-12 | Initial spec, complete rewrite |
+| 3.0.0-dev | 2025-01-12 | Core + Systems complete, Suggestion System spec added |
 
 ---
 

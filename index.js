@@ -21,6 +21,11 @@ import * as status from './src/systems/status.js';
 import * as inventory from './src/systems/inventory.js';
 import * as ledger from './src/systems/ledger.js';
 
+// Suggestion System
+import * as suggestionPanel from './src/suggestion/suggestion-panel.js';
+import * as suggestionState from './src/suggestion/suggestion-state.js';
+import * as suggestionGen from './src/suggestion/suggestion-gen.js';
+
 // UI (to be implemented)
 // import * as panel from './src/ui/panel.js';
 // import * as tabs from './src/ui/tabs.js';
@@ -43,6 +48,9 @@ async function init() {
             return;
         }
         
+        // Load Suggestion CSS
+        loadSuggestionStyles();
+        
         // Set up ST event listeners
         persistence.setupSTEventListeners();
         
@@ -63,6 +71,9 @@ async function init() {
         // Add extension settings panel
         addExtensionSettings();
         
+        // Initialize Suggestion panel
+        suggestionPanel.init();
+        
         // Initialize UI (when implemented)
         // await initUI();
         
@@ -76,6 +87,16 @@ async function init() {
     } catch (error) {
         console.error(`[${EXTENSION_NAME}] Initialization failed:`, error);
     }
+}
+
+/**
+ * Load Suggestion panel CSS
+ */
+function loadSuggestionStyles() {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `scripts/extensions/third-party/${EXTENSION_NAME}/src/suggestion/suggestion-styles.css`;
+    document.head.appendChild(link);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -264,6 +285,17 @@ window.Interfacing = {
     getMemories: ledger.getMemories,
     addContact: ledger.addContact,
     getContacts: ledger.getContacts,
+    
+    // Suggestion System
+    suggestion: {
+        open: suggestionState.openPanel,
+        close: suggestionState.closePanel,
+        toggle: suggestionState.togglePanel,
+        generate: suggestionGen.generateSuggestions,
+        getSuggestions: suggestionState.getSuggestions,
+        getSettings: suggestionState.getSettings,
+        updateSettings: suggestionState.updateSettings
+    },
     
     // Persistence
     save: persistence.saveToChat,
