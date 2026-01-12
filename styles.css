@@ -860,3 +860,14 @@
 .preset-action-btn:active {
     transform: translateY(0);
 }
+
+/* Modal close button */
+.interfacing-modal-close:hover {
+    background: #4a4a5a !important;
+    color: #fff !important;
+}
+
+/* Detail panel close button */
+.detail-close-btn:hover {
+    color: #e8e8e8 !important;
+}

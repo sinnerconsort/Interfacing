@@ -1193,7 +1193,7 @@
         modal.innerHTML = '<div class="interfacing-modal-content" style="width:90%;max-width:500px;max-height:80vh;background:#1a1a1f;border:1px solid #3a3a4a;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">' +
             '<div class="interfacing-modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#252530;border-bottom:1px solid #3a3a4a;">' +
                 '<span style="color:#bfa127;font-weight:bold;font-size:14px;">📦 BROWSE ITEMS</span>' +
-                '<button class="interfacing-modal-close" style="background:none;border:none;color:#888;font-size:24px;cursor:pointer;padding:0;line-height:1;">×</button>' +
+                '<button class="interfacing-modal-close" style="background:#3a3a4a;border:1px solid #4a4a5a;color:#e8e8e8;font-size:12px;cursor:pointer;padding:6px 12px;border-radius:4px;font-weight:bold;">✕ Close</button>' +
             '</div>' +
             '<div class="interfacing-modal-body" style="padding:12px;overflow-y:auto;flex:1;">' + content + '</div>' +
             '<div id="preset-detail-panel" style="display:none;padding:12px;background:#252530;border-top:1px solid #3a3a4a;max-height:50%;overflow-y:auto;"></div>' +
@@ -1222,11 +1222,19 @@
         modal.querySelectorAll('.preset-card').forEach(function(card) {
             card.addEventListener('click', function() {
                 var itemId = card.dataset.itemId;
-                showItemDetail(itemId, modal);
+                var wasSelected = card.classList.contains('selected');
                 
-                // Highlight selected
+                // Clear all selections
                 modal.querySelectorAll('.preset-card').forEach(function(c) { c.classList.remove('selected'); });
-                card.classList.add('selected');
+                
+                // Toggle - if already selected, close detail panel
+                if (wasSelected) {
+                    var detailPanel = modal.querySelector('#preset-detail-panel');
+                    if (detailPanel) detailPanel.style.display = 'none';
+                } else {
+                    card.classList.add('selected');
+                    showItemDetail(itemId, modal);
+                }
             });
         });
         
@@ -1285,17 +1293,26 @@
         var actionColor = item.isConsumable ? '#6449af' : '#bfa127';
         
         detailPanel.innerHTML = 
-            '<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;">' +
-                '<div style="font-size:32px;">' + (item.icon || '📦') + '</div>' +
-                '<div style="flex:1;">' +
-                    '<div style="font-size:16px;font-weight:bold;color:#e8e8e8;">' + item.name + '</div>' +
-                    '<div style="font-size:10px;color:#666;text-transform:uppercase;margin-top:2px;">' + (item.slot || item.category) + '</div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">' +
+                '<div style="display:flex;align-items:flex-start;gap:12px;flex:1;">' +
+                    '<div style="font-size:32px;">' + (item.icon || '📦') + '</div>' +
+                    '<div style="flex:1;">' +
+                        '<div style="font-size:16px;font-weight:bold;color:#e8e8e8;">' + item.name + '</div>' +
+                        '<div style="font-size:10px;color:#666;text-transform:uppercase;margin-top:2px;">' + (item.slot || item.category) + '</div>' +
+                    '</div>' +
                 '</div>' +
+                '<button class="detail-close-btn" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;padding:4px 8px;">✕</button>' +
             '</div>' +
             '<div style="color:#a0a0a0;font-size:12px;line-height:1.5;margin-bottom:12px;">' + (item.description || '') + '</div>' +
             '<div style="margin-bottom:12px;">' + modsHtml + '</div>' +
             voiceHtml +
             '<button class="preset-action-btn" data-item-id="' + itemId + '" style="width:100%;margin-top:12px;padding:10px;background:' + actionColor + ';border:none;color:#000;font-weight:bold;border-radius:4px;cursor:pointer;">' + actionText + '</button>';
+        
+        // Bind close button for detail panel
+        detailPanel.querySelector('.detail-close-btn').addEventListener('click', function() {
+            detailPanel.style.display = 'none';
+            modal.querySelectorAll('.preset-card').forEach(function(c) { c.classList.remove('selected'); });
+        });
         
         // Bind action button
         detailPanel.querySelector('.preset-action-btn').addEventListener('click', function(e) {
