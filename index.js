@@ -74,6 +74,9 @@ async function init() {
         // Initialize Suggestion panel
         suggestionPanel.init();
         
+        // Set up auto-mode listener for Suggestion
+        setupSuggestionAutoMode();
+        
         // Initialize UI (when implemented)
         // await initUI();
         
@@ -134,6 +137,55 @@ function onStatusChanged(data) {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// SUGGESTION AUTO-MODE
+// ═══════════════════════════════════════════════════════════════
+
+function setupSuggestionAutoMode() {
+    // Get ST context for event source
+    const context = typeof SillyTavern !== 'undefined' 
+        ? SillyTavern.getContext() 
+        : (typeof getContext === 'function' ? getContext() : null);
+    
+    if (!context?.eventSource) {
+        console.warn(`[${EXTENSION_NAME}] No event source for auto-mode`);
+        return;
+    }
+    
+    const eventSource = context.eventSource;
+    const eventTypes = context.event_types || {};
+    
+    // Listen for new messages
+    if (eventTypes.MESSAGE_RECEIVED) {
+        eventSource.on(eventTypes.MESSAGE_RECEIVED, async () => {
+            // Only trigger in auto mode
+            if (!suggestionState.isAutoMode()) return;
+            
+            // Only if IE is connected
+            if (!ieBridge.isReady()) return;
+            
+            // Small delay to let message render
+            setTimeout(async () => {
+                console.log(`[${EXTENSION_NAME}] Auto-generating suggestions...`);
+                await suggestionGen.generateSuggestions();
+            }, 500);
+        });
+    }
+    
+    // Also listen for when user sends a message (in case they want fresh suggestions)
+    if (eventTypes.USER_MESSAGE_RENDERED) {
+        eventSource.on(eventTypes.USER_MESSAGE_RENDERED, async () => {
+            if (!suggestionState.isAutoMode()) return;
+            if (!ieBridge.isReady()) return;
+            
+            // Clear old suggestions when user sends message
+            suggestionState.clearSuggestions();
+        });
+    }
+    
+    console.log(`[${EXTENSION_NAME}] Suggestion auto-mode listener set up`);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // EXTENSION SETTINGS PANEL
 // ═══════════════════════════════════════════════════════════════
 
@@ -143,6 +195,8 @@ function addExtensionSettings() {
         console.warn(`[${EXTENSION_NAME}] Extensions settings container not found`);
         return;
     }
+    
+    const sugSettings = suggestionState.getSettings();
     
     const html = `
         <div class="inline-drawer" id="interfacing-extension-drawer">
@@ -181,6 +235,56 @@ function addExtensionSettings() {
                     <div id="if-status-display" style="font-size: 12px; color: #888;">
                         ${getStatusDisplay()}
                     </div>
+                    
+                    <hr style="margin: 10px 0; border-color: #444;">
+                    
+                    <!-- Suggestion System Settings -->
+                    <div style="margin-bottom: 10px;">
+                        <b style="color: #bfa127; font-size: 12px;">💭 SUGGESTION</b>
+                    </div>
+                    
+                    <label class="checkbox_label">
+                        <input type="checkbox" id="if-sug-enabled" ${sugSettings.enabled ? 'checked' : ''}>
+                        <span>Enable Suggestions</span>
+                    </label>
+                    
+                    <div style="margin: 10px 0;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 12px;">Mode</label>
+                        <select id="if-sug-mode" style="width: 100%; padding: 4px;">
+                            <option value="manual" ${sugSettings.mode === 'manual' ? 'selected' : ''}>Manual (refresh button)</option>
+                            <option value="auto" ${sugSettings.mode === 'auto' ? 'selected' : ''}>Auto (after each message)</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 12px;">
+                            Suggestions: <span id="if-sug-count-val">${sugSettings.suggestionCount}</span>
+                        </label>
+                        <input type="range" id="if-sug-count" value="${sugSettings.suggestionCount}" 
+                               min="3" max="5" style="width: 100%;">
+                    </div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 12px;">
+                            Chaos: <span id="if-sug-chaos-val">${Math.round(sugSettings.chaosLevel * 100)}%</span>
+                        </label>
+                        <input type="range" id="if-sug-chaos" value="${sugSettings.chaosLevel * 100}" 
+                               min="0" max="100" style="width: 100%;">
+                        <div style="display: flex; justify-content: space-between; font-size: 10px; color: #666;">
+                            <span>Practical</span>
+                            <span>Unhinged</span>
+                        </div>
+                    </div>
+                    
+                    <label class="checkbox_label">
+                        <input type="checkbox" id="if-sug-clipboard" ${sugSettings.copyToClipboard ? 'checked' : ''}>
+                        <span>Copy result to clipboard</span>
+                    </label>
+                    
+                    <label class="checkbox_label">
+                        <input type="checkbox" id="if-sug-autoclose" ${sugSettings.autoCloseOnSelect ? 'checked' : ''}>
+                        <span>Close panel after selection</span>
+                    </label>
                     
                     <hr style="margin: 10px 0; border-color: #444;">
                     
@@ -223,14 +327,51 @@ function addExtensionSettings() {
         }
     });
     
+    // Suggestion settings listeners
+    document.getElementById('if-sug-enabled')?.addEventListener('change', function() {
+        suggestionState.updateSettings({ enabled: this.checked });
+        if (!this.checked) {
+            suggestionState.closePanel();
+        }
+    });
+    
+    document.getElementById('if-sug-mode')?.addEventListener('change', function() {
+        suggestionState.setMode(this.value);
+    });
+    
+    document.getElementById('if-sug-count')?.addEventListener('input', function() {
+        const val = parseInt(this.value);
+        document.getElementById('if-sug-count-val').textContent = val;
+        suggestionState.updateSettings({ suggestionCount: val });
+    });
+    
+    document.getElementById('if-sug-chaos')?.addEventListener('input', function() {
+        const val = parseInt(this.value) / 100;
+        document.getElementById('if-sug-chaos-val').textContent = `${this.value}%`;
+        suggestionState.updateSettings({ chaosLevel: val });
+    });
+    
+    document.getElementById('if-sug-clipboard')?.addEventListener('change', function() {
+        suggestionState.updateSettings({ copyToClipboard: this.checked });
+    });
+    
+    document.getElementById('if-sug-autoclose')?.addEventListener('change', function() {
+        suggestionState.updateSettings({ autoCloseOnSelect: this.checked });
+    });
+    
     // Update status display when vitals change
     document.addEventListener('if:vitals-changed', updateStatusDisplay);
+    
+    // Update status display when suggestions change
+    document.addEventListener('suggestion:state-changed', updateStatusDisplay);
 }
 
 function getStatusDisplay() {
     const health = status.getHealth();
     const morale = status.getMorale();
     const ieStatus = ieBridge.isReady() ? '✅ Connected' : '⏳ Waiting...';
+    const sugCount = suggestionState.getSuggestions().length;
+    const sugMode = suggestionState.getMode();
     
     return `
         <div>IE: ${ieStatus}</div>
@@ -238,6 +379,7 @@ function getStatusDisplay() {
         <div>Morale: ${morale.current}/${morale.effectiveMax}</div>
         <div>Equipped: ${inventory.getAllEquipped().length} items</div>
         <div>Tasks: ${ledger.getActiveTasks().length} active</div>
+        <div>Suggestions: ${sugCount} (${sugMode})</div>
     `;
 }
 
@@ -292,7 +434,10 @@ window.Interfacing = {
         close: suggestionState.closePanel,
         toggle: suggestionState.togglePanel,
         generate: suggestionGen.generateSuggestions,
+        generateFor: suggestionGen.generateForIntent,
+        execute: suggestionGen.executeSuggestion,
         getSuggestions: suggestionState.getSuggestions,
+        getLastResult: suggestionState.getLastResult,
         getSettings: suggestionState.getSettings,
         updateSettings: suggestionState.updateSettings
     },
