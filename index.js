@@ -1146,7 +1146,8 @@
         var modal = document.createElement('div');
         modal.id = 'interfacing-presets-modal';
         modal.className = 'interfacing-modal';
-        modal.style.cssText = 'position:fixed;top:50px;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:200000;';
+        // Full screen overlay
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:200000;';
         
         // Group items by category
         var clothes = [];
@@ -1190,21 +1191,23 @@
                       renderCategory('TOOLS', tools) +
                       renderCategory('CONSUMABLES', consumables);
         
-        modal.innerHTML = '<div class="interfacing-modal-content" style="width:90%;max-width:500px;max-height:70vh;background:#1a1a1f;border:1px solid #3a3a4a;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">' +
-            '<div class="interfacing-modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#252530;border-bottom:1px solid #3a3a4a;">' +
-                '<span style="color:#bfa127;font-weight:bold;font-size:14px;">📦 BROWSE ITEMS</span>' +
-                '<button class="interfacing-modal-close" style="background:#3a3a4a;border:1px solid #4a4a5a;color:#e8e8e8;font-size:12px;cursor:pointer;padding:6px 12px;border-radius:4px;font-weight:bold;">✕ Close</button>' +
-            '</div>' +
-            '<div class="interfacing-modal-body" style="padding:12px;overflow-y:auto;flex:1;">' + content + '</div>' +
-            '<div id="preset-detail-panel" style="display:none;padding:12px;background:#252530;border-top:1px solid #3a3a4a;max-height:35%;overflow-y:auto;"></div>' +
-        '</div>';
+        // Bottom sheet style - anchored to bottom, slides up
+        modal.innerHTML = 
+            '<div class="interfacing-bottom-sheet" style="position:absolute;bottom:0;left:0;right:0;max-height:75vh;background:#1a1a1f;border-top:2px solid #bfa127;border-radius:12px 12px 0 0;display:flex;flex-direction:column;">' +
+                '<div class="interfacing-sheet-header" style="display:flex;justify-content:space-between;align-items:center;padding:16px;background:#252530;border-radius:12px 12px 0 0;border-bottom:1px solid #3a3a4a;flex-shrink:0;">' +
+                    '<span style="color:#bfa127;font-weight:bold;font-size:16px;">📦 BROWSE ITEMS</span>' +
+                    '<button class="interfacing-modal-close" style="background:#a54;border:none;color:#fff;font-size:14px;cursor:pointer;padding:8px 16px;border-radius:4px;font-weight:bold;">✕ Close</button>' +
+                '</div>' +
+                '<div class="interfacing-sheet-body" style="padding:12px;overflow-y:auto;flex:1;">' + content + '</div>' +
+                '<div id="preset-detail-panel" style="display:none;padding:12px;background:#252530;border-top:1px solid #3a3a4a;max-height:40vh;overflow-y:auto;flex-shrink:0;"></div>' +
+            '</div>';
         
         // Close button
         modal.querySelector('.interfacing-modal-close').addEventListener('click', function() { 
             modal.remove(); 
         });
         
-        // Click outside to close
+        // Click on dark overlay to close
         modal.addEventListener('click', function(e) {
             if (e.target === modal) modal.remove();
         });
