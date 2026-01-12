@@ -4,19 +4,20 @@
  * 
  * "What would you have me say?"
  * 
- * Dependencies: suggestion-state.js, suggestion-gen.js, config.js
+ * Dependencies: suggestion-state.js, suggestion-gen.js, config.js, fab.js
  */
 
 import * as state from './suggestion-state.js';
 import * as gen from './suggestion-gen.js';
-import { SKILLS, ATTRIBUTES } from '../core/config.js';
+import { SKILLS } from '../core/config.js';
+import { createFab, injectFabStyles } from '../ui/fab.js';
 
 // ═══════════════════════════════════════════════════════════════
 // PANEL CREATION
 // ═══════════════════════════════════════════════════════════════
 
 let panelElement = null;
-let toggleButton = null;
+let suggestionFab = null;
 let isInitialized = false;
 
 /**
@@ -25,7 +26,9 @@ let isInitialized = false;
 export function init() {
     if (isInitialized) return;
     
-    createToggleButton();
+    injectFabStyles();
+    injectStyles();
+    createFabButton();
     createPanel();
     setupEventListeners();
     
@@ -34,23 +37,44 @@ export function init() {
 }
 
 /**
- * Create the toggle button (floating)
+ * Create the FAB toggle button (💡)
  */
-function createToggleButton() {
-    toggleButton = document.createElement('div');
-    toggleButton.id = 'suggestion-toggle';
-    toggleButton.className = 'suggestion-toggle';
-    toggleButton.innerHTML = `
-        <span class="suggestion-toggle-icon">💭</span>
-        <span class="suggestion-toggle-badge" style="display: none;">0</span>
-    `;
-    toggleButton.title = 'Suggestions';
+function createFabButton() {
+    const settings = state.getSettings();
     
-    toggleButton.addEventListener('click', () => {
-        state.togglePanel();
+    suggestionFab = createFab({
+        id: 'if-suggestion-fab',
+        icon: '💡',
+        tooltip: 'Suggestions',
+        position: { bottom: 100, right: 20 },
+        className: 'if-fab-suggestion',
+        onClick: () => state.togglePanel()
     });
     
-    document.body.appendChild(toggleButton);
+    // Hide if disabled in settings
+    if (!settings.enabled || settings.showFab === false) {
+        suggestionFab.hide();
+    }
+    
+    // Listen for settings changes
+    document.addEventListener('if:suggestion-settings-changed', updateFabVisibility);
+}
+
+function updateFabVisibility() {
+    const settings = state.getSettings();
+    if (settings.enabled && settings.showFab !== false) {
+        suggestionFab?.show();
+    } else {
+        suggestionFab?.hide();
+    }
+}
+
+export function showFab() {
+    suggestionFab?.show();
+}
+
+export function hideFab() {
+    suggestionFab?.hide();
 }
 
 /**
@@ -540,6 +564,27 @@ function showToast(message, type = 'info') {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// STYLE INJECTION
+// ═══════════════════════════════════════════════════════════════
+
+function injectStyles() {
+    if (document.getElementById('suggestion-panel-styles')) return;
+    
+    // Try to load external CSS first
+    const extensionPath = typeof SillyTavern !== 'undefined' 
+        ? 'scripts/extensions/third-party/Interfacing'
+        : '';
+    
+    if (extensionPath) {
+        const link = document.createElement('link');
+        link.id = 'suggestion-panel-styles';
+        link.rel = 'stylesheet';
+        link.href = `${extensionPath}/src/suggestion/suggestion-styles.css`;
+        document.head.appendChild(link);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // CLEANUP
 // ═══════════════════════════════════════════════════════════════
 
@@ -551,9 +596,9 @@ export function destroy() {
         panelElement.remove();
         panelElement = null;
     }
-    if (toggleButton) {
-        toggleButton.remove();
-        toggleButton = null;
+    if (suggestionFab) {
+        suggestionFab.destroy();
+        suggestionFab = null;
     }
     isInitialized = false;
 }
