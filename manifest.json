@@ -1,12 +1,12 @@
 {
-    "display_name": "Interfacing",
-    "loading_order": 15,
+    "display_name": "The Tribunal",
+    "loading_order": 10,
     "requires": [],
     "optional": [],
     "js": "index.js",
     "css": "styles.css",
-    "author": "sinnerconsort",
-    "version": "3.0.0-dev",
-    "description": "Disco Elysium gameplay systems - inventory, vitals, and quest tracking. Companion to Inland Empire.",
-    "notes": "Requires Inland Empire extension for full functionality. Will run in limited mode without IE."
+    "author": "Judas",
+    "version": "2.0.0",
+    "description": "A Disco Elysium-inspired internal skill voice system. 24 skills argue in your head, passing judgment on every situation.",
+    "homePage": "https://github.com/your-repo/the-tribunal"
 }
