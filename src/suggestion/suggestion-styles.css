@@ -1,0 +1,567 @@
+/**
+ * Interfacing - Suggestion Panel Styles
+ * Disco Elysium aesthetic for the floating suggestion panel
+ */
+
+/* ════════════════════════════════════════════════════════════════
+   CSS VARIABLES
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+    --sug-bg: #1a1a1f;
+    --sug-bg-dark: #141418;
+    --sug-bg-card: #222228;
+    --sug-border: #3a3a4a;
+    --sug-text: #e8e8e8;
+    --sug-text-dim: #888888;
+    --sug-accent: #bfa127;
+    
+    --sug-success: #4a9966;
+    --sug-failure: #a54444;
+    --sug-critical-success: #ffd700;
+    --sug-critical-failure: #8b0000;
+    
+    --sug-panel-width: 340px;
+    --sug-panel-max-height: 70vh;
+    --sug-toggle-size: 44px;
+    --sug-transition: 0.3s ease;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   TOGGLE BUTTON
+   ════════════════════════════════════════════════════════════════ */
+
+.suggestion-toggle {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: var(--sug-toggle-size);
+    height: var(--sug-toggle-size);
+    background: var(--sug-bg);
+    border: 1px solid var(--sug-border);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: all var(--sug-transition);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.suggestion-toggle:hover {
+    border-color: var(--sug-accent);
+    transform: scale(1.05);
+}
+
+.suggestion-toggle.active {
+    background: var(--sug-accent);
+    border-color: var(--sug-accent);
+}
+
+.suggestion-toggle-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.suggestion-toggle.active .suggestion-toggle-icon {
+    filter: brightness(0.2);
+}
+
+.suggestion-toggle-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    background: var(--sug-accent);
+    color: #000;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PANEL
+   ════════════════════════════════════════════════════════════════ */
+
+.suggestion-panel {
+    position: fixed;
+    bottom: 160px;
+    right: 20px;
+    width: var(--sug-panel-width);
+    max-width: calc(100vw - 40px);
+    max-height: var(--sug-panel-max-height);
+    background: var(--sug-bg);
+    border: 1px solid var(--sug-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    transition: opacity var(--sug-transition), transform var(--sug-transition);
+}
+
+.suggestion-panel-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   HEADER
+   ════════════════════════════════════════════════════════════════ */
+
+.suggestion-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--sug-bg-dark);
+    border-bottom: 1px solid var(--sug-border);
+    user-select: none;
+}
+
+.suggestion-panel-title {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--sug-accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.suggestion-panel-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.suggestion-mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--sug-text-dim);
+    cursor: pointer;
+}
+
+.suggestion-mode-toggle input {
+    margin: 0;
+    cursor: pointer;
+}
+
+.suggestion-mode-toggle input:checked + span {
+    color: var(--sug-accent);
+}
+
+.suggestion-refresh-btn,
+.suggestion-close-btn {
+    background: none;
+    border: none;
+    color: var(--sug-text-dim);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.suggestion-refresh-btn:hover,
+.suggestion-close-btn:hover {
+    color: var(--sug-text);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   BODY
+   ════════════════════════════════════════════════════════════════ */
+
+.suggestion-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    min-height: 150px;
+    max-height: calc(var(--sug-panel-max-height) - 120px);
+}
+
+/* Scrollbar styling */
+.suggestion-panel-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.suggestion-panel-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.suggestion-panel-body::-webkit-scrollbar-thumb {
+    background: var(--sug-border);
+    border-radius: 3px;
+}
+
+.suggestion-panel-body::-webkit-scrollbar-thumb:hover {
+    background: var(--sug-text-dim);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SUGGESTION LIST
+   ════════════════════════════════════════════════════════════════ */
+
+.suggestion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.suggestion-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--sug-text-dim);
+}
+
+.suggestion-empty p {
+    margin: 0 0 8px 0;
+}
+
+.suggestion-empty-hint {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SUGGESTION CARD
+   ════════════════════════════════════════════════════════════════ */
+
+.suggestion-card {
+    background: var(--sug-bg-card);
+    border: 1px solid var(--sug-border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.suggestion-card:hover {
+    border-color: var(--sug-accent);
+    transform: translateX(2px);
+}
+
+.suggestion-card:active {
+    transform: scale(0.98);
+}
+
+.suggestion-card-rolling {
+    opacity: 0.6;
+    pointer-events: none;
+    animation: card-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes card-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.9; }
+}
+
+.suggestion-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.suggestion-card-skill {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.suggestion-card-difficulty {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.suggestion-card-short {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sug-text);
+    margin-bottom: 4px;
+}
+
+.suggestion-card-voice {
+    font-size: 12px;
+    color: var(--sug-text-dim);
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.suggestion-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.suggestion-tag {
+    font-size: 9px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    color: var(--sug-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   LOADING STATE
+   ════════════════════════════════════════════════════════════════ */
+
+.suggestion-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    gap: 12px;
+    color: var(--sug-text-dim);
+}
+
+.suggestion-loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--sug-border);
+    border-top-color: var(--sug-accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ERROR STATE
+   ════════════════════════════════════════════════════════════════ */
+
+.suggestion-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    gap: 12px;
+    text-align: center;
+}
+
+.suggestion-error-text {
+    color: var(--sug-failure);
+    font-size: 13px;
+}
+
+.suggestion-retry-btn {
+    background: var(--sug-bg-card);
+    border: 1px solid var(--sug-border);
+    color: var(--sug-text);
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.suggestion-retry-btn:hover {
+    border-color: var(--sug-accent);
+    background: var(--sug-bg);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ROLL RESULT
+   ════════════════════════════════════════════════════════════════ */
+
+.suggestion-result {
+    padding: 16px;
+    border-radius: 6px;
+    background: var(--sug-bg-card);
+    border: 1px solid var(--sug-border);
+}
+
+.suggestion-result.success {
+    border-color: var(--sug-success);
+}
+
+.suggestion-result.failure {
+    border-color: var(--sug-failure);
+}
+
+.suggestion-result.critical-success {
+    border-color: var(--sug-critical-success);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), transparent);
+}
+
+.suggestion-result.critical-failure {
+    border-color: var(--sug-critical-failure);
+    background: linear-gradient(135deg, rgba(139, 0, 0, 0.1), transparent);
+}
+
+.suggestion-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--sug-border);
+}
+
+.suggestion-result-skill {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.suggestion-result-roll {
+    font-size: 11px;
+    text-align: right;
+}
+
+.roll-numbers {
+    color: var(--sug-text-dim);
+}
+
+.roll-outcome {
+    display: block;
+    font-weight: bold;
+    margin-top: 2px;
+}
+
+.suggestion-result.success .roll-outcome { color: var(--sug-success); }
+.suggestion-result.failure .roll-outcome { color: var(--sug-failure); }
+.suggestion-result.critical-success .roll-outcome { color: var(--sug-critical-success); }
+.suggestion-result.critical-failure .roll-outcome { color: var(--sug-critical-failure); }
+
+.suggestion-result-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--sug-text);
+    margin-bottom: 12px;
+}
+
+.suggestion-result-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.suggestion-copy-btn,
+.suggestion-dismiss-btn {
+    background: var(--sug-bg);
+    border: 1px solid var(--sug-border);
+    color: var(--sug-text);
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+}
+
+.suggestion-copy-btn:hover,
+.suggestion-dismiss-btn:hover {
+    border-color: var(--sug-accent);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   FOOTER (Intent Input)
+   ════════════════════════════════════════════════════════════════ */
+
+.suggestion-panel-footer {
+    padding: 10px 12px;
+    background: var(--sug-bg-dark);
+    border-top: 1px solid var(--sug-border);
+}
+
+.suggestion-intent-wrapper {
+    margin-bottom: 8px;
+}
+
+.suggestion-intent-label {
+    display: block;
+    font-size: 11px;
+    color: var(--sug-text-dim);
+    margin-bottom: 4px;
+    font-style: italic;
+}
+
+.suggestion-intent-input {
+    width: 100%;
+    background: var(--sug-bg);
+    border: 1px solid var(--sug-border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    color: var(--sug-text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.suggestion-intent-input:focus {
+    border-color: var(--sug-accent);
+}
+
+.suggestion-intent-input::placeholder {
+    color: var(--sug-text-dim);
+    opacity: 0.6;
+}
+
+.suggestion-generate-btn {
+    width: 100%;
+    background: var(--sug-accent);
+    border: none;
+    color: #000;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+}
+
+.suggestion-generate-btn:hover {
+    background: #d4b22e;
+    transform: translateY(-1px);
+}
+
+.suggestion-generate-btn:active {
+    transform: translateY(0);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE
+   ════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+    .suggestion-panel {
+        right: 10px;
+        left: 10px;
+        bottom: 70px;
+        width: auto;
+        max-width: none;
+    }
+    
+    .suggestion-toggle {
+        right: 10px;
+        bottom: 70px;
+    }
+    
+    .suggestion-mode-toggle span {
+        display: none;
+    }
+}
