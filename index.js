@@ -30,6 +30,12 @@ import * as suggestionState from './src/suggestion/suggestion-state.js';
 import * as suggestionGen from './src/suggestion/suggestion-gen.js';
 
 // ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+
+let isFullyInitialized = false;
+
+// ═══════════════════════════════════════════════════════════════
 // INITIALIZATION
 // ═══════════════════════════════════════════════════════════════
 
@@ -40,51 +46,100 @@ async function init() {
         // Load global settings first
         persistence.loadGlobalSettings();
         
+        // Always add extension settings (so user can toggle)
+        addExtensionSettings();
+        
         // Check if enabled
         if (!state.getSetting('enabled')) {
             console.log(`[${EXTENSION_NAME}] Extension disabled`);
-            addExtensionSettings(); // Still show settings so user can enable
             return;
         }
         
-        // Set up ST event listeners
-        persistence.setupSTEventListeners();
-        
-        // Enable auto-save
-        persistence.enableAutoSave();
-        
-        // Load chat-specific data
-        persistence.loadFromChat();
-        
-        // Connect to Inland Empire
-        ieBridge.init({
-            onConnected: onIEConnected,
-            onSkillCheck: onSkillCheck,
-            onModifierChanged: onModifierChanged,
-            onStatusChanged: onStatusChanged
-        });
-        
-        // Add extension settings panel (minimal - just enable/disable)
-        addExtensionSettings();
-        
-        // Initialize main UI panel (📋 FAB + sliding panel)
-        panel.init();
-        
-        // Initialize Suggestion panel (💡 FAB + floating panel)
-        suggestionPanel.init();
-        
-        // Set up auto-mode listener for Suggestion
-        setupSuggestionAutoMode();
-        
-        console.log(`[${EXTENSION_NAME}] Ready!`);
-        
-        // Show toast if available
-        if (typeof toastr !== 'undefined') {
-            toastr.success(`${EXTENSION_NAME} v${EXTENSION_VERSION} loaded`, EXTENSION_NAME, { timeOut: 2000 });
-        }
+        // Full initialization
+        await initializeSystems();
         
     } catch (error) {
         console.error(`[${EXTENSION_NAME}] Initialization failed:`, error);
+    }
+}
+
+/**
+ * Initialize all systems (called on load if enabled, or when user enables)
+ */
+async function initializeSystems() {
+    if (isFullyInitialized) {
+        // Already initialized - just show UI
+        panel.showFab();
+        suggestionPanel.showFab?.();
+        return;
+    }
+    
+    // Set up ST event listeners
+    persistence.setupSTEventListeners();
+    
+    // Enable auto-save
+    persistence.enableAutoSave();
+    
+    // Load chat-specific data
+    persistence.loadFromChat();
+    
+    // Connect to Inland Empire
+    ieBridge.init({
+        onConnected: onIEConnected,
+        onSkillCheck: onSkillCheck,
+        onModifierChanged: onModifierChanged,
+        onStatusChanged: onStatusChanged
+    });
+    
+    // Initialize main UI panel (📋 FAB + sliding panel)
+    panel.init();
+    
+    // Initialize Suggestion panel (💡 FAB + floating panel)
+    suggestionPanel.init();
+    
+    // Set up auto-mode listener for Suggestion
+    setupSuggestionAutoMode();
+    
+    isFullyInitialized = true;
+    
+    console.log(`[${EXTENSION_NAME}] Ready!`);
+    
+    // Show toast if available
+    if (typeof toastr !== 'undefined') {
+        toastr.success(`${EXTENSION_NAME} v${EXTENSION_VERSION} loaded`, EXTENSION_NAME, { timeOut: 2000 });
+    }
+}
+
+/**
+ * Disable extension (hide UI without page reload)
+ */
+function disableExtension() {
+    // Close panels if open
+    panel.closePanel?.();
+    suggestionPanel.closePanel?.();
+    
+    // Hide FABs
+    panel.hideFab();
+    suggestionPanel.hideFab?.();
+    
+    console.log(`[${EXTENSION_NAME}] Extension disabled (UI hidden)`);
+    
+    if (typeof toastr !== 'undefined') {
+        toastr.info('Interfacing disabled', EXTENSION_NAME, { timeOut: 2000 });
+    }
+}
+
+/**
+ * Enable extension (initialize or show UI)
+ */
+async function enableExtension() {
+    await initializeSystems();
+    
+    // Update status display
+    updateStatusDisplay();
+    
+    if (typeof toastr !== 'undefined') {
+        toastr.success('Interfacing enabled', EXTENSION_NAME, { timeOut: 2000 });
     }
 }
 
@@ -226,13 +281,21 @@ function addExtensionSettings() {
     
     container.insertAdjacentHTML('beforeend', html);
     
-    // Event listener for enable toggle
-    document.getElementById('if-enabled')?.addEventListener('change', function() {
-        state.setSetting('enabled', this.checked);
+    // Event listener for enable toggle - NO RELOAD!
+    document.getElementById('if-enabled')?.addEventListener('change', async function() {
+        const nowEnabled = this.checked;
+        
+        state.setSetting('enabled', nowEnabled);
         persistence.saveGlobalSettings();
         
-        // Reload to apply changes
-        location.reload();
+        if (nowEnabled) {
+            await enableExtension();
+        } else {
+            disableExtension();
+        }
+        
+        // Update the status display
+        updateStatusDisplay();
     });
     
     // Update status display on changes
@@ -328,7 +391,12 @@ window.Interfacing = {
     
     // IE Bridge
     isIEConnected: ieBridge.isReady,
-    getIE: ieBridge.getIE
+    getIE: ieBridge.getIE,
+    
+    // Enable/Disable (new)
+    enable: enableExtension,
+    disable: disableExtension,
+    isEnabled: () => state.getSetting('enabled')
 };
 
 // ═══════════════════════════════════════════════════════════════
