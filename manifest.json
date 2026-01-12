@@ -2,11 +2,11 @@
     "display_name": "Interfacing",
     "loading_order": 15,
     "requires": [],
-    "optional": ["inland-empire"],
+    "optional": [],
     "js": "index.js",
     "css": "styles.css",
-    "author": "SinnerConsort",
-    "version": "0.1.0",
-    "description": "Disco Elysium-style inventory, vitals, and choice systems. Companion to Inland Empire.",
-    "homePage": "https://github.com/sinnerconsort/Interfacing"
+    "author": "sinnerconsort",
+    "version": "3.0.0-dev",
+    "description": "Disco Elysium gameplay systems - inventory, vitals, and quest tracking. Companion to Inland Empire.",
+    "notes": "Requires Inland Empire extension for full functionality. Will run in limited mode without IE."
 }
